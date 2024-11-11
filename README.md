@@ -5,7 +5,7 @@ A fully featured REST API for an online KYC (know your customer) system. This wi
 
 ## Usage
 
-1. Set the required environment variables :in .env file
+1. Set the required environment variables in .env file
 2. Run the command below to build and run the binary:
    ```
    make run
