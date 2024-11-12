@@ -7,8 +7,9 @@ import (
 )
 
 type Config struct {
-	Host string
-	Port string
+	Host   string
+	Port   string
+	DB_Dsn string
 }
 
 var Envs = initConfig()
@@ -20,8 +21,9 @@ func initConfig() *Config {
 	}
 
 	return &Config{
-		Host: getEnv("HOST", ""),
-		Port: getEnv("PORT", "8080"),
+		Host:   getEnv("HOST", ""),
+		Port:   getEnv("PORT", "8080"),
+		DB_Dsn: getEnv("DB_Dsn", ""),
 	}
 }
 

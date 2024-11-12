@@ -6,12 +6,20 @@ A fully featured REST API for an online KYC (know your customer) system. This wi
 ## Usage
 
 1. Set the required environment variables in .env file
-2. Run the command below to build and run the binary:
+2. Run the command below to launch PostgreSQL container
    ```
-   make run
+   docker compose up
    ```
-3. Connect to the server using any HTTP client 
+3. Run the command below to apply the necessary migrations
+   ```
+   make create-migrate
+4. Run the command below to build and run the binary:
+   ```
+   make create-migrate && bin/migrate -m=up
+   ```
+5. Connect to the server using any HTTP client 
 
 ## Current Progress Feat
 
 - Health check endpoint working
+- Migrate up implemented successfully
