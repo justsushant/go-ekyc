@@ -8,7 +8,7 @@ import (
 
 func main() {
 	// extracting dsn from env var
-	dsn := config.Envs.DB_Dsn
+	dsn := config.Envs.DB_DSN
 	if dsn == "" {
 		panic("Database DSN not found")
 	}
