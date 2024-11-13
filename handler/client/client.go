@@ -8,7 +8,17 @@ import (
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
 )
 
-func SignupHandler(c *gin.Context) {
+type ClientHandler struct {
+	service client.ClientServiceInterface
+}
+
+func NewHandler(service client.ClientServiceInterface) ClientHandler {
+	return ClientHandler{
+		service: service,
+	}
+}
+
+func (h *ClientHandler) SignupHandler(c *gin.Context) {
 	var payload types.SignupPayload
 	err := json.NewDecoder(c.Request.Body).Decode(&payload)
 	if err != nil {
@@ -16,7 +26,7 @@ func SignupHandler(c *gin.Context) {
 		return
 	}
 
-	if err := client.ValidatePayload(payload); err != nil {
+	if err := h.service.ValidatePayload(payload); err != nil {
 		c.JSON(400, gin.H{"errorMessage": err.Error()})
 		return
 	}

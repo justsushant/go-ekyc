@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/controller/client"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -56,7 +57,8 @@ func TestSignupHandler(t *testing.T) {
 			c.Request.Header.Set("Content-Type", "application/json")
 
 			// calling the signup handler
-			SignupHandler(c)
+			handler := NewHandler(client.NewClientService())
+			handler.SignupHandler(c)
 
 			// asserting the values
 			assert.Equal(t, tc.expStatusCode, w.Code)
