@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/controller/client"
@@ -13,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// mock of client service for usage in tests
 type mockClientService struct{}
 
 func (m mockClientService) ValidatePayload(payload types.SignupPayload) error {
@@ -23,6 +25,13 @@ func (m mockClientService) ValidatePayload(payload types.SignupPayload) error {
 	} else {
 		return nil
 	}
+}
+
+func (m mockClientService) GenerateAccessToken(payload types.SignupPayload, expiryTime time.Duration, secret []byte) (string, error) {
+	return "qwerty", nil
+}
+func (m mockClientService) GenerateRefreshToken(payload types.SignupPayload, expiryTime time.Duration, secret []byte) (string, error) {
+	return "quirkyfox", nil
 }
 
 func TestSignupHandler(t *testing.T) {
@@ -51,6 +60,16 @@ func TestSignupHandler(t *testing.T) {
 			},
 			expStatusCode: http.StatusBadRequest,
 			expResponse:   `{"errorMessage":"invalid plan, supported plans are basic, advanced, or enterprise"}`,
+		},
+		{
+			name: "valid case",
+			payload: types.SignupPayload{
+				Name:  "abc corp",
+				Email: "test@abc.corp",
+				Plan:  "basic",
+			},
+			expStatusCode: http.StatusOK,
+			expResponse:   `{"accessKey":"qwerty", "secretKey":"quirkyfox"}`,
 		},
 	}
 

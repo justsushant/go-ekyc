@@ -6,3 +6,6 @@ run: build
 
 create-migrate:
 	@go build -o bin/migrate cmd/migration/migration.go
+
+test:
+	@go test ./...
