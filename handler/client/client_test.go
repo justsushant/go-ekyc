@@ -63,9 +63,6 @@ func TestSignupHandlerForInvalidPlan(t *testing.T) {
 		Plan:  "invalid-plan",
 	}
 	expStatus := http.StatusBadRequest
-	// expResp := `{
-	// 	"errorMessage”: "invalid email"
-	// }`
 	expErrorMessage := "invalid plan, supported plans are basic, advanced, or enterprise"
 
 	// marhalling the payload into json
