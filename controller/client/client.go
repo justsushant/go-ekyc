@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/golang-jwt/jwt"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
 )
 
@@ -18,14 +17,17 @@ const RefreshTokenExpiry = 7 * 24 * time.Hour
 // TODO: Change the interface name
 type ClientServiceInterface interface {
 	ValidatePayload(payload types.SignupPayload) error
-	GenerateAccessToken(payload types.SignupPayload, expiryTime time.Duration, secret []byte) (string, error)
-	GenerateRefreshToken(payload types.SignupPayload, expiryTime time.Duration, secret []byte) (string, error)
+	GenerateTokenPair(payload types.SignupPayload) (TokenPair, error)
 }
 
-type ClientService struct{}
+type ClientService struct {
+	tokenService TokenGenerator
+}
 
-func NewClientService() ClientService {
-	return ClientService{}
+func NewClientService(tokenService TokenGenerator) ClientService {
+	return ClientService{
+		tokenService: tokenService,
+	}
 }
 
 func (c ClientService) ValidatePayload(payload types.SignupPayload) error {
@@ -39,24 +41,8 @@ func (c ClientService) ValidatePayload(payload types.SignupPayload) error {
 	return nil
 }
 
-func (c ClientService) GenerateAccessToken(payload types.SignupPayload, expiryTime time.Duration, secret []byte) (string, error) {
-	claims := jwt.MapClaims{
-		"client_email": payload.Email,
-		"client_plan":  payload.Plan,
-		"exp":          time.Now().Add(expiryTime).Unix(),
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(secret)
-}
-
-func (c ClientService) GenerateRefreshToken(payload types.SignupPayload, expiryTime time.Duration, secret []byte) (string, error) {
-	claims := jwt.MapClaims{
-		"client_email": payload.Email,
-		"client_plan":  payload.Plan,
-		"exp":          time.Now().Add(expiryTime).Unix(),
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(secret)
+func (c ClientService) GenerateTokenPair(payload types.SignupPayload) (*TokenPair, error) {
+	return c.tokenService.GenerateTokenPair(payload)
 }
 
 func validatePlan(plan string) error {

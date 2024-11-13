@@ -34,20 +34,14 @@ func (h *ClientHandler) SignupHandler(c *gin.Context) {
 		return
 	}
 
-	accessToken, err := h.service.GenerateAccessToken(payload, client.AccessTokenExpiry, []byte(TEMP_SECRET))
-	if err != nil {
-		c.JSON(400, gin.H{"errorMessage": err.Error()})
-		return
-	}
-
-	refreshToken, err := h.service.GenerateRefreshToken(payload, client.RefreshTokenExpiry, []byte(TEMP_SECRET))
+	tokenPair, err := h.service.GenerateTokenPair(payload)
 	if err != nil {
 		c.JSON(400, gin.H{"errorMessage": err.Error()})
 		return
 	}
 
 	c.JSON(200, gin.H{
-		"accessKey": accessToken,
-		"secretKey": refreshToken,
+		"accessKey": tokenPair.AccessToken,
+		"secretKey": tokenPair.RefreshToken,
 	})
 }

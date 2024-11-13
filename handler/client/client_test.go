@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/controller/client"
@@ -27,11 +26,11 @@ func (m mockClientService) ValidatePayload(payload types.SignupPayload) error {
 	}
 }
 
-func (m mockClientService) GenerateAccessToken(payload types.SignupPayload, expiryTime time.Duration, secret []byte) (string, error) {
-	return "qwerty", nil
-}
-func (m mockClientService) GenerateRefreshToken(payload types.SignupPayload, expiryTime time.Duration, secret []byte) (string, error) {
-	return "quirkyfox", nil
+func (m mockClientService) GenerateTokenPair(payload types.SignupPayload) (client.TokenPair, error) {
+	return client.TokenPair{
+		AccessToken:  "qwerty",
+		RefreshToken: "quirkyfox",
+	}, nil
 }
 
 func TestSignupHandler(t *testing.T) {
