@@ -13,6 +13,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type mockClientService struct{}
+
+func (m mockClientService) ValidatePayload(payload types.SignupPayload) error {
+	if payload.Email == "test@abc@corp" {
+		return client.ErrInvalidEmail
+	} else if payload.Plan == "invalid-plan" {
+		return client.ErrInvalidPlan
+	} else {
+		return nil
+	}
+}
+
 func TestSignupHandler(t *testing.T) {
 	tt := []struct {
 		name          string
@@ -57,7 +69,7 @@ func TestSignupHandler(t *testing.T) {
 			c.Request.Header.Set("Content-Type", "application/json")
 
 			// calling the signup handler
-			handler := NewHandler(client.NewClientService())
+			handler := NewHandler(&mockClientService{})
 			handler.SignupHandler(c)
 
 			// asserting the values

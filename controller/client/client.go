@@ -15,8 +15,7 @@ type ClientServiceInterface interface {
 	ValidatePayload(payload types.SignupPayload) error
 }
 
-type ClientService struct {
-}
+type ClientService struct{}
 
 func NewClientService() ClientService {
 	return ClientService{}
