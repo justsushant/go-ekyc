@@ -1,0 +1,3 @@
+ALTER TABLE ocr
+ALTER COLUMN details TYPE JSONB
+USING details::JSONB;
