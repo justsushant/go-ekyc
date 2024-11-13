@@ -20,6 +20,7 @@ var (
 )
 
 // TODO: Implement the force option
+// TODO: Implement the up and down with steps, by default only one step up or down
 
 func main() {
 	// set the flags
@@ -37,7 +38,7 @@ func main() {
 	// create migration
 	mig, err := migrate.New(MIGRATION_FILES_PATH, pgDsn)
 	if err != nil {
-		log.Fatalf("error occured while creating migration: %v\n", err)
+		log.Fatalf("Error occured while creating migration: %v\n", err)
 	}
 
 	// acting on the supplied migration mode
@@ -46,19 +47,19 @@ func main() {
 		case "up":
 			err = mig.Up()
 			if err != nil && err.Error() != "no change" {
-				log.Fatalf("Error applying migrations: %v\n", err)
+				log.Fatalf("Error occured while applying migrations: %v\n", err)
 			}
 			log.Printf("Migrations applied successfully\n")
 		case "down":
 			err = mig.Down()
 			if err != nil && err.Error() != "no change" {
-				log.Fatalf("Error rolling back migrations: %v\n", err)
+				log.Fatalf("Error occured while rolling back migrations: %v\n", err)
 			}
 			log.Printf("Rollback applied successfully\n")
 		case "status":
 			version, dirty, err := mig.Version()
 			if err != nil {
-				log.Fatalf("Error getting migration status: %v\n", err)
+				log.Fatalf("Error occured while getting migration status: %v\n", err)
 			}
 			log.Printf("Current version: %d, Dirty: %v\n", version, dirty)
 		default:
@@ -70,9 +71,8 @@ func main() {
 	if migVer != 0 {
 		err := mig.Migrate(uint(migVer))
 		if err != nil {
-			log.Fatalf("Error occured while forcing migration: %v", err)
+			log.Fatalf("Error occured while applying migration: %v", err)
 		}
 		log.Printf("Migration version %d applied successfully\n", migVer)
 	}
-
 }
