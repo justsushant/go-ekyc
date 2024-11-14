@@ -4,28 +4,25 @@ import (
 	"encoding/json"
 
 	"github.com/gin-gonic/gin"
-	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/controller/client"
+	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/controller"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
 )
 
-// TODO: Use the secret from config type
-const TEMP_SECRET = "xyz"
-
-type ClientHandler struct {
-	service client.ClientServiceInterface
+type Handler struct {
+	service controller.ControllerInterface
 }
 
-func NewHandler(service client.ClientServiceInterface) ClientHandler {
-	return ClientHandler{
+func NewHandler(service controller.ControllerInterface) Handler {
+	return Handler{
 		service: service,
 	}
 }
 
-func (h *ClientHandler) RegisterRoutes(router *gin.RouterGroup) {
+func (h *Handler) RegisterRoutes(router *gin.RouterGroup) {
 	router.POST("/signup", h.SignupHandler)
 }
 
-func (h *ClientHandler) SignupHandler(c *gin.Context) {
+func (h *Handler) SignupHandler(c *gin.Context) {
 	var payload types.SignupPayload
 	err := json.NewDecoder(c.Request.Body).Decode(&payload)
 	if err != nil {

@@ -7,8 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/config"
-	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/controller/client"
-	handler "github.com/justsushant/one2n-go-bootcamp/go-ekyc/handler/client"
+	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/controller"
+	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/handler"
 )
 
 type Server struct {
@@ -33,8 +33,8 @@ func (s *Server) Run() {
 		})
 	})
 
-	tokenService := client.NewTokenService(config.Envs.Access_token_secret, config.Envs.Refresh_token_secret)
-	clientService := client.NewClientService(tokenService)
+	tokenService := controller.NewTokenService(config.Envs.Access_token_secret, config.Envs.Refresh_token_secret)
+	clientService := controller.NewService(tokenService)
 	clientHandler := handler.NewHandler(clientService)
 	clientHandler.RegisterRoutes(apiRouter)
 

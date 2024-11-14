@@ -8,26 +8,26 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/controller/client"
+	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/controller"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
 	"github.com/stretchr/testify/assert"
 )
 
 // mock of client service for usage in tests
-type mockClientService struct{}
+type mockService struct{}
 
-func (m mockClientService) ValidatePayload(payload types.SignupPayload) error {
+func (m mockService) ValidatePayload(payload types.SignupPayload) error {
 	if payload.Email == "test@abc@corp" {
-		return client.ErrInvalidEmail
+		return controller.ErrInvalidEmail
 	} else if payload.Plan == "invalid-plan" {
-		return client.ErrInvalidPlan
+		return controller.ErrInvalidPlan
 	} else {
 		return nil
 	}
 }
 
-func (m mockClientService) GenerateTokenPair(payload types.SignupPayload) (*client.TokenPair, error) {
-	return &client.TokenPair{
+func (m mockService) GenerateTokenPair(payload types.SignupPayload) (*controller.TokenPair, error) {
+	return &controller.TokenPair{
 		AccessToken:  "qwerty",
 		RefreshToken: "quirkyfox",
 	}, nil
@@ -87,7 +87,7 @@ func TestSignupHandler(t *testing.T) {
 			c.Request.Header.Set("Content-Type", "application/json")
 
 			// calling the signup handler
-			handler := NewHandler(&mockClientService{})
+			handler := NewHandler(&mockService{})
 			handler.SignupHandler(c)
 
 			// asserting the values

@@ -1,4 +1,4 @@
-package client
+package controller
 
 import (
 	"errors"
@@ -11,22 +11,22 @@ var ErrInvalidEmail = errors.New("invalid email")
 var ErrInvalidPlan = errors.New("invalid plan, supported plans are basic, advanced, or enterprise")
 
 // TODO: Change the interface name
-type ClientServiceInterface interface {
+type ControllerInterface interface {
 	ValidatePayload(payload types.SignupPayload) error
 	GenerateTokenPair(payload types.SignupPayload) (*TokenPair, error)
 }
 
-type ClientService struct {
+type Service struct {
 	tokenService TokenGenerator
 }
 
-func NewClientService(tokenService TokenGenerator) ClientService {
-	return ClientService{
+func NewService(tokenService TokenGenerator) Service {
+	return Service{
 		tokenService: tokenService,
 	}
 }
 
-func (c ClientService) ValidatePayload(payload types.SignupPayload) error {
+func (c Service) ValidatePayload(payload types.SignupPayload) error {
 	if err := validateEmail(payload.Email); err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func (c ClientService) ValidatePayload(payload types.SignupPayload) error {
 	return nil
 }
 
-func (c ClientService) GenerateTokenPair(payload types.SignupPayload) (*TokenPair, error) {
+func (c Service) GenerateTokenPair(payload types.SignupPayload) (*TokenPair, error) {
 	return c.tokenService.GenerateTokenPair(payload)
 }
 
