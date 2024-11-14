@@ -8,14 +8,16 @@ import (
 )
 
 type Service struct {
-	store        Store
+	dataStore    Store
+	fileStore    FileStore
 	tokenService TokenGenerator
 }
 
-func NewService(store Store, tokenService TokenGenerator) Service {
+func NewService(dataStore Store, fileStore FileStore, tokenService TokenGenerator) Service {
 	return Service{
-		store:        store,
+		dataStore:    dataStore,
 		tokenService: tokenService,
+		fileStore:    fileStore,
 	}
 }
 
@@ -35,12 +37,12 @@ func (c Service) GenerateTokenPair(payload types.SignupPayload) (*TokenPair, err
 }
 
 func (c Service) SaveSignupData(payload types.SignupPayload, refreshToken string) error {
-	planId, err := c.store.GetPlanIdFromName(payload.Name)
+	planId, err := c.dataStore.GetPlanIdFromName(payload.Name)
 	if err != nil {
 		return err
 	}
 
-	err = c.store.InsertClientData(payload, planId, refreshToken)
+	err = c.dataStore.InsertClientData(payload, planId, refreshToken)
 	if err != nil {
 		return err
 	}

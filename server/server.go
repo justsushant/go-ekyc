@@ -9,17 +9,20 @@ import (
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/config"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/controller"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/handler"
+	"github.com/minio/minio-go/v7"
 )
 
 type Server struct {
-	addr string
-	db   *sql.DB
+	addr  string
+	db    *sql.DB
+	minio *minio.Client
 }
 
-func NewServer(addr string, db *sql.DB) *Server {
+func NewServer(addr string, db *sql.DB, minio *minio.Client) *Server {
 	return &Server{
-		addr: addr,
-		db:   db,
+		addr:  addr,
+		db:    db,
+		minio: minio,
 	}
 }
 
@@ -35,10 +38,12 @@ func (s *Server) Run() {
 	})
 
 	psqlStore := controller.NewPsqlStore(s.db)
+	minioStore := controller.NewMinioStore(s.minio, config.Envs.MinioBucket)
 	tokenService := controller.NewTokenService(config.Envs.Access_token_secret, config.Envs.Refresh_token_secret)
-	clientService := controller.NewService(psqlStore, tokenService)
-	clientHandler := handler.NewHandler(clientService)
-	clientHandler.RegisterRoutes(apiRouter)
+	service := controller.NewService(psqlStore, minioStore, tokenService)
+
+	handler := handler.NewHandler(service)
+	handler.RegisterRoutes(apiRouter)
 
 	log.Println("Server listening on", s.addr)
 	if err := http.ListenAndServe(s.addr, router); err != nil {

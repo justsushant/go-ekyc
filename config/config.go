@@ -12,6 +12,11 @@ type Config struct {
 	DB_DSN               string
 	Access_token_secret  string
 	Refresh_token_secret string
+	MinioUser            string
+	MinioPassword        string
+	MinioEndpoint        string
+	MinioSSL             string
+	MinioBucket          string
 }
 
 var Envs = initConfig()
@@ -28,6 +33,10 @@ func initConfig() *Config {
 		DB_DSN:               getEnv("DB_DSN", ""),
 		Access_token_secret:  getEnv("ACCESS_TOKEN_SECRET", ""),
 		Refresh_token_secret: getEnv("REFRESH_TOKEN_SECRET", ""),
+		MinioUser:            getEnv("MINIO_USER", ""),
+		MinioPassword:        getEnv("MINIO_PASSWORD", ""),
+		MinioEndpoint:        getEnv("MINIO_ENDPOINT", ""),
+		MinioBucket:          getEnv("MINIO_BUCKET", ""),
 	}
 }
 
