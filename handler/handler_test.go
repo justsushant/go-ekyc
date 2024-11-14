@@ -33,6 +33,10 @@ func (m mockService) GenerateTokenPair(payload types.SignupPayload) (*controller
 	}, nil
 }
 
+func (m mockService) SaveSignupData(payload types.SignupPayload, refreshToken string) error {
+	return nil
+}
+
 func TestSignupHandler(t *testing.T) {
 	tt := []struct {
 		name          string

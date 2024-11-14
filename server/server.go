@@ -33,8 +33,9 @@ func (s *Server) Run() {
 		})
 	})
 
+	psqlStore := controller.NewPsqlStore(s.db)
 	tokenService := controller.NewTokenService(config.Envs.Access_token_secret, config.Envs.Refresh_token_secret)
-	clientService := controller.NewService(tokenService)
+	clientService := controller.NewService(psqlStore, tokenService)
 	clientHandler := handler.NewHandler(clientService)
 	clientHandler.RegisterRoutes(apiRouter)
 

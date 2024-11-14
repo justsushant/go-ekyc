@@ -6,4 +6,10 @@ import "github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
 type ControllerInterface interface {
 	ValidatePayload(payload types.SignupPayload) error
 	GenerateTokenPair(payload types.SignupPayload) (*TokenPair, error)
+	SaveSignupData(payload types.SignupPayload, refreshToken string) error
+}
+
+type Store interface {
+	GetPlanIdFromName(planName string) (int, error)
+	InsertClientData(payload types.SignupPayload, planId int, refreshToken string) error
 }

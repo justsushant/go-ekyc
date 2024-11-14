@@ -7,11 +7,13 @@ import (
 )
 
 type Service struct {
+	store        Store
 	tokenService TokenGenerator
 }
 
-func NewService(tokenService TokenGenerator) Service {
+func NewService(store Store, tokenService TokenGenerator) Service {
 	return Service{
+		store:        store,
 		tokenService: tokenService,
 	}
 }
@@ -29,6 +31,20 @@ func (c Service) ValidatePayload(payload types.SignupPayload) error {
 
 func (c Service) GenerateTokenPair(payload types.SignupPayload) (*TokenPair, error) {
 	return c.tokenService.GenerateTokenPair(payload)
+}
+
+func (c Service) SaveSignupData(payload types.SignupPayload, refreshToken string) error {
+	planId, err := c.store.GetPlanIdFromName(payload.Name)
+	if err != nil {
+		return err
+	}
+
+	err = c.store.InsertClientData(payload, planId, refreshToken)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func validatePlan(plan string) error {
