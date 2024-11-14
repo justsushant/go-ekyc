@@ -1,20 +1,10 @@
 package controller
 
 import (
-	"errors"
 	"regexp"
 
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
 )
-
-var ErrInvalidEmail = errors.New("invalid email")
-var ErrInvalidPlan = errors.New("invalid plan, supported plans are basic, advanced, or enterprise")
-
-// TODO: Change the interface name
-type ControllerInterface interface {
-	ValidatePayload(payload types.SignupPayload) error
-	GenerateTokenPair(payload types.SignupPayload) (*TokenPair, error)
-}
 
 type Service struct {
 	tokenService TokenGenerator
