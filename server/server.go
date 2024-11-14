@@ -23,6 +23,7 @@ func NewServer(addr string, db *sql.DB) *Server {
 	}
 }
 
+// TODO: Implement the auth middleware later
 func (s *Server) Run() {
 	router := gin.Default()
 

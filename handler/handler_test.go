@@ -3,8 +3,10 @@ package handler
 import (
 	"bytes"
 	"encoding/json"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -34,6 +36,19 @@ func (m mockService) GenerateTokenPair(payload types.SignupPayload) (*controller
 }
 
 func (m mockService) SaveSignupData(payload types.SignupPayload, refreshToken string) error {
+	return nil
+}
+
+func (m mockService) ValidateFile(fileName, fileType string) error {
+	if fileType != "face" && fileType != "id_card" {
+		return controller.ErrInvalidFileType
+	}
+
+	ext := filepath.Ext(fileName)
+	if ext != types.VALID_FORMAT_PNG && ext != types.VALID_FORMAT_JPEG {
+		return controller.ErrInvalidFileFormat
+	}
+
 	return nil
 }
 
@@ -93,6 +108,85 @@ func TestSignupHandler(t *testing.T) {
 			// calling the signup handler
 			handler := NewHandler(&mockService{})
 			handler.SignupHandler(c)
+
+			// asserting the values
+			assert.Equal(t, tc.expStatusCode, w.Code)
+			assert.JSONEq(t, tc.expResponse, w.Body.String())
+		})
+	}
+}
+
+func TestFileUploadHandler(t *testing.T) {
+	tt := []struct {
+		name          string
+		fileName      string
+		fileType      string
+		content       string
+		expStatusCode int
+		expResponse   string
+	}{
+		{
+			name:          "invalid file type case",
+			fileName:      "invalid.jpeg",
+			fileType:      "invalid-type",
+			content:       "Hello, world!",
+			expStatusCode: http.StatusBadRequest,
+			expResponse:   `{"errorMessage": "invalid type, supported types are face or id_card"}`,
+		},
+		{
+			name:          "invalid empty file type case",
+			fileName:      "invalid.jpeg",
+			fileType:      "",
+			content:       "Hello, world!",
+			expStatusCode: http.StatusBadRequest,
+			expResponse:   `{"errorMessage": "invalid type, supported types are face or id_card"}`,
+		},
+		{
+			name:          "invalid file name without ext case",
+			fileName:      "fileName",
+			fileType:      "face",
+			content:       "Hello, world!",
+			expStatusCode: http.StatusBadRequest,
+			expResponse:   `{"errorMessage": "invalid file format, supported formats are png or jpeg"}`,
+		},
+		{
+			name:          "invalid file format case",
+			fileName:      "invalid.cyan",
+			fileType:      "face",
+			content:       "Hello, world!",
+			expStatusCode: http.StatusBadRequest,
+			expResponse:   `{"errorMessage": "invalid file format, supported formats are png or jpeg"}`,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// reading file from the request body
+			var buf bytes.Buffer
+
+			writer := multipart.NewWriter(&buf)
+
+			part, err := writer.CreateFormFile("file", tc.fileName)
+			if err != nil {
+				t.Fatalf("Error creating form file: %v", err)
+			}
+			part.Write([]byte(tc.content))
+
+			// reading normal key-value pair
+			writer.WriteField("type", tc.fileType)
+
+			// closing the writer
+			writer.Close()
+
+			// preparing the test
+			w := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(w)
+			c.Request = httptest.NewRequest("POST", "/image", &buf)
+			c.Request.Header.Set("Content-Type", writer.FormDataContentType())
+
+			// calling the file upload handler
+			handler := NewHandler(&mockService{})
+			handler.FileUploadHandler(c)
 
 			// asserting the values
 			assert.Equal(t, tc.expStatusCode, w.Code)

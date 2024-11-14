@@ -7,6 +7,7 @@ type ControllerInterface interface {
 	ValidatePayload(payload types.SignupPayload) error
 	GenerateTokenPair(payload types.SignupPayload) (*TokenPair, error)
 	SaveSignupData(payload types.SignupPayload, refreshToken string) error
+	ValidateFile(fileName, fileType string) error
 }
 
 type Store interface {

@@ -52,3 +52,22 @@ func (h *Handler) SignupHandler(c *gin.Context) {
 		"secretKey": tokenPair.RefreshToken,
 	})
 }
+
+func (h *Handler) FileUploadHandler(c *gin.Context) {
+	// reading type from request body
+	fileType := c.PostForm("type")
+
+	// reading file from request body
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(400, gin.H{"errorMessage": err.Error()})
+		return
+	}
+
+	// applying validations on file
+	err = h.service.ValidateFile(file.Filename, fileType)
+	if err != nil {
+		c.JSON(400, gin.H{"errorMessage": err.Error()})
+		return
+	}
+}

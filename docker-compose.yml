@@ -9,3 +9,17 @@ services:
       POSTGRES_DB: ekyc_db
     ports:
       - 5432:5432
+  minio:
+    image: minio/minio:latest
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "9000:9000"       # MinIO API port
+      - "9001:9001"       # MinIO Console port
+    command: server /data
+    volumes:
+      - minio_data:/data  # Persistent storage for MinIO
+
+volumes:
+  minio_data:

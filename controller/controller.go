@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"path/filepath"
 	"regexp"
 
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
@@ -47,12 +48,26 @@ func (c Service) SaveSignupData(payload types.SignupPayload, refreshToken string
 	return nil
 }
 
-func validatePlan(plan string) error {
-	switch plan {
-	case types.BasicPlan, types.AdvancePlan, types.EnterprisePlan:
+func (c Service) ValidateFile(fileName, fileType string) error {
+	err := validateFileType(fileType)
+	if err != nil {
+		return err
+	}
+
+	err = validateFileExt(fileName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateFileType(fileType string) error {
+	switch fileType {
+	case types.FaceType, types.IdCardType:
 		return nil
 	default:
-		return ErrInvalidPlan
+		return ErrInvalidFileType
 	}
 }
 
@@ -63,4 +78,22 @@ func validateEmail(email string) error {
 		return nil
 	}
 	return ErrInvalidEmail
+}
+
+func validateFileExt(fileName string) error {
+	switch filepath.Ext(fileName) {
+	case types.VALID_FORMAT_PNG, types.VALID_FORMAT_JPEG:
+		return nil
+	default:
+		return ErrInvalidFileFormat
+	}
+}
+
+func validatePlan(plan string) error {
+	switch plan {
+	case types.BasicPlan, types.AdvancePlan, types.EnterprisePlan:
+		return nil
+	default:
+		return ErrInvalidPlan
+	}
 }
