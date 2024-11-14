@@ -6,6 +6,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/config"
+	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/controller/client"
+	handler "github.com/justsushant/one2n-go-bootcamp/go-ekyc/handler/client"
 )
 
 type Server struct {
@@ -29,6 +32,11 @@ func (s *Server) Run() {
 			"message": "OK",
 		})
 	})
+
+	tokenService := client.NewTokenService(config.Envs.Access_token_secret, config.Envs.Refresh_token_secret)
+	clientService := client.NewClientService(tokenService)
+	clientHandler := handler.NewHandler(clientService)
+	clientHandler.RegisterRoutes(apiRouter)
 
 	log.Println("Server listening on", s.addr)
 	if err := http.ListenAndServe(s.addr, router); err != nil {

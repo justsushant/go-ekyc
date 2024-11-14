@@ -26,8 +26,8 @@ func (m mockClientService) ValidatePayload(payload types.SignupPayload) error {
 	}
 }
 
-func (m mockClientService) GenerateTokenPair(payload types.SignupPayload) (client.TokenPair, error) {
-	return client.TokenPair{
+func (m mockClientService) GenerateTokenPair(payload types.SignupPayload) (*client.TokenPair, error) {
+	return &client.TokenPair{
 		AccessToken:  "qwerty",
 		RefreshToken: "quirkyfox",
 	}, nil

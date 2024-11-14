@@ -3,7 +3,6 @@ package client
 import (
 	"errors"
 	"regexp"
-	"time"
 
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
 )
@@ -11,13 +10,10 @@ import (
 var ErrInvalidEmail = errors.New("invalid email")
 var ErrInvalidPlan = errors.New("invalid plan, supported plans are basic, advanced, or enterprise")
 
-const AccessTokenExpiry = 15 * time.Minute
-const RefreshTokenExpiry = 7 * 24 * time.Hour
-
 // TODO: Change the interface name
 type ClientServiceInterface interface {
 	ValidatePayload(payload types.SignupPayload) error
-	GenerateTokenPair(payload types.SignupPayload) (TokenPair, error)
+	GenerateTokenPair(payload types.SignupPayload) (*TokenPair, error)
 }
 
 type ClientService struct {

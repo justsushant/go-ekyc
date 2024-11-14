@@ -21,6 +21,10 @@ func NewHandler(service client.ClientServiceInterface) ClientHandler {
 	}
 }
 
+func (h *ClientHandler) RegisterRoutes(router *gin.RouterGroup) {
+	router.POST("/signup", h.SignupHandler)
+}
+
 func (h *ClientHandler) SignupHandler(c *gin.Context) {
 	var payload types.SignupPayload
 	err := json.NewDecoder(c.Request.Body).Decode(&payload)

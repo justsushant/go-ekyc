@@ -7,6 +7,9 @@ import (
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
 )
 
+const ACCESS_TOKEN_EXPIRY = 15 * time.Minute
+const REFRESH_TOKEN_EXPIRY = 7 * 24 * time.Hour
+
 type TokenPair struct {
 	AccessToken  string
 	RefreshToken string
@@ -23,14 +26,24 @@ type TokenService struct {
 	RefreshTokenSecret []byte
 }
 
-func NewTokenService(accessTokenExpiry, refreshTokenExpiry time.Duration, accessTokenSecret, refreshTokenSecret []byte) TokenService {
+// TODO: No idea why its throwing error (no .env file found) when screts are accessed using config from inside
+func NewTokenService(accessKeySecret, refreshKeySecret string) TokenService {
 	return TokenService{
-		AccessTokenExpiry:  accessTokenExpiry,
-		RefreshTokenExpiry: refreshTokenExpiry,
-		AccessTokenSecret:  accessTokenSecret,
-		RefreshTokenSecret: refreshTokenSecret,
+		AccessTokenExpiry:  ACCESS_TOKEN_EXPIRY,
+		RefreshTokenExpiry: REFRESH_TOKEN_EXPIRY,
+		AccessTokenSecret:  []byte(accessKeySecret),
+		RefreshTokenSecret: []byte(refreshKeySecret),
 	}
 }
+
+// func NewTokenService() TokenService {
+// 	return TokenService{
+// 		AccessTokenExpiry:  ACCESS_TOKEN_EXPIRY,
+// 		RefreshTokenExpiry: REFRESH_TOKEN_EXPIRY,
+// 		AccessTokenSecret:  []byte(config.Envs.Access_token_secret),
+// 		RefreshTokenSecret: []byte(config.Envs.Refresh_token_secret),
+// 	}
+// }
 
 // TODO: Consider security and token length considerations
 func (t TokenService) GenerateTokenPair(payload types.SignupPayload) (*TokenPair, error) {
