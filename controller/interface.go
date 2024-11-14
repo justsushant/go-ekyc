@@ -14,3 +14,6 @@ type Store interface {
 	GetPlanIdFromName(planName string) (int, error)
 	InsertClientData(payload types.SignupPayload, planId int, refreshToken string) error
 }
+
+type FileStore interface {
+}

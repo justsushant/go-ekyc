@@ -7,9 +7,6 @@ import (
 	"github.com/minio/minio-go/v7"
 )
 
-type FileStore interface {
-}
-
 type MinioStore struct {
 	client     *minio.Client
 	bucketName string
