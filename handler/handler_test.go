@@ -52,6 +52,10 @@ func (m mockService) ValidateFile(fileName, fileType string) error {
 	return nil
 }
 
+func (m mockService) SaveUploadedFile(fileHeader *multipart.FileHeader) error {
+	return nil
+}
+
 func TestSignupHandler(t *testing.T) {
 	tt := []struct {
 		name          string

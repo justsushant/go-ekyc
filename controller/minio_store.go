@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"log"
+	"mime/multipart"
 
 	"github.com/minio/minio-go/v7"
 )
@@ -30,4 +31,20 @@ func NewMinioStore(client *minio.Client, bucketName string) MinioStore {
 		client:     client,
 		bucketName: bucketName,
 	}
+}
+
+func (m MinioStore) SaveFile(fileHeader *multipart.FileHeader) error {
+	file, err := fileHeader.Open()
+	if err != nil {
+		return err
+	}
+
+	_, err = m.client.PutObject(context.Background(), m.bucketName, fileHeader.Filename, file, fileHeader.Size, minio.PutObjectOptions{
+		ContentType: fileHeader.Header.Get("Content-Type"),
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

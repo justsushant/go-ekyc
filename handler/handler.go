@@ -58,16 +58,23 @@ func (h *Handler) FileUploadHandler(c *gin.Context) {
 	fileType := c.PostForm("type")
 
 	// reading file from request body
-	file, err := c.FormFile("file")
+	fileHeader, err := c.FormFile("file")
 	if err != nil {
 		c.JSON(400, gin.H{"errorMessage": err.Error()})
 		return
 	}
 
 	// applying validations on file
-	err = h.service.ValidateFile(file.Filename, fileType)
+	err = h.service.ValidateFile(fileHeader.Filename, fileType)
 	if err != nil {
 		c.JSON(400, gin.H{"errorMessage": err.Error()})
+		return
+	}
+
+	// save the file to bucket
+	err = h.service.SaveUploadedFile(fileHeader)
+	if err != nil {
+		c.JSON(500, gin.H{"errorMessage": err.Error()})
 		return
 	}
 }

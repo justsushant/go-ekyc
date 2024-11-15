@@ -1,6 +1,10 @@
 package controller
 
-import "github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
+import (
+	"mime/multipart"
+
+	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
+)
 
 // TODO: Change the interface name
 type ControllerInterface interface {
@@ -8,6 +12,7 @@ type ControllerInterface interface {
 	GenerateTokenPair(payload types.SignupPayload) (*TokenPair, error)
 	SaveSignupData(payload types.SignupPayload, refreshToken string) error
 	ValidateFile(fileName, fileType string) error
+	SaveUploadedFile(fileHeader *multipart.FileHeader) error
 }
 
 type Store interface {
@@ -16,4 +21,5 @@ type Store interface {
 }
 
 type FileStore interface {
+	SaveFile(fileHeader *multipart.FileHeader) error
 }

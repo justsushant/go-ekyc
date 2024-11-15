@@ -1,6 +1,8 @@
 package controller
 
+// TODO: Change controller to service through out the package accordingly
 import (
+	"mime/multipart"
 	"path/filepath"
 	"regexp"
 
@@ -61,6 +63,14 @@ func (c Service) ValidateFile(fileName, fileType string) error {
 		return err
 	}
 
+	return nil
+}
+
+func (c Service) SaveUploadedFile(fileHeader *multipart.FileHeader) error {
+	err := c.fileStore.SaveFile(fileHeader)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
