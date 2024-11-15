@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/controller"
+	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/service"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -20,16 +20,16 @@ type mockService struct{}
 
 func (m mockService) ValidatePayload(payload types.SignupPayload) error {
 	if payload.Email == "test@abc@corp" {
-		return controller.ErrInvalidEmail
+		return service.ErrInvalidEmail
 	} else if payload.Plan == "invalid-plan" {
-		return controller.ErrInvalidPlan
+		return service.ErrInvalidPlan
 	} else {
 		return nil
 	}
 }
 
-func (m mockService) GenerateTokenPair(payload types.SignupPayload) (*controller.TokenPair, error) {
-	return &controller.TokenPair{
+func (m mockService) GenerateTokenPair(payload types.SignupPayload) (*service.TokenPair, error) {
+	return &service.TokenPair{
 		AccessToken:  "qwerty",
 		RefreshToken: "quirkyfox",
 	}, nil
@@ -41,12 +41,12 @@ func (m mockService) SaveSignupData(payload types.SignupPayload, refreshToken st
 
 func (m mockService) ValidateFile(fileName, fileType string) error {
 	if fileType != "face" && fileType != "id_card" {
-		return controller.ErrInvalidFileType
+		return service.ErrInvalidFileType
 	}
 
 	ext := filepath.Ext(fileName)
 	if ext != types.VALID_FORMAT_PNG && ext != types.VALID_FORMAT_JPEG {
-		return controller.ErrInvalidFileFormat
+		return service.ErrInvalidFileFormat
 	}
 
 	return nil

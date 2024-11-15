@@ -4,15 +4,15 @@ import (
 	"encoding/json"
 
 	"github.com/gin-gonic/gin"
-	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/controller"
+	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/service"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
 )
 
 type Handler struct {
-	service controller.ControllerInterface
+	service service.ControllerInterface
 }
 
-func NewHandler(service controller.ControllerInterface) Handler {
+func NewHandler(service service.ControllerInterface) Handler {
 	return Handler{
 		service: service,
 	}

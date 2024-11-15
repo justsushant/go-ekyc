@@ -1,6 +1,5 @@
-package controller
+package service
 
-// TODO: Change controller to service through out the package accordingly
 import (
 	"mime/multipart"
 	"path/filepath"

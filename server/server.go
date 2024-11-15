@@ -7,8 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/config"
-	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/controller"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/handler"
+	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/service"
 	"github.com/minio/minio-go/v7"
 )
 
@@ -37,10 +37,10 @@ func (s *Server) Run() {
 		})
 	})
 
-	psqlStore := controller.NewPsqlStore(s.db)
-	minioStore := controller.NewMinioStore(s.minio, config.Envs.MinioBucket)
-	tokenService := controller.NewTokenService(config.Envs.Access_token_secret, config.Envs.Refresh_token_secret)
-	service := controller.NewService(psqlStore, minioStore, tokenService)
+	psqlStore := service.NewPsqlStore(s.db)
+	minioStore := service.NewMinioStore(s.minio, config.Envs.MinioBucket)
+	tokenService := service.NewTokenService(config.Envs.Access_token_secret, config.Envs.Refresh_token_secret)
+	service := service.NewService(psqlStore, minioStore, tokenService)
 
 	handler := handler.NewHandler(service)
 	handler.RegisterRoutes(apiRouter)
