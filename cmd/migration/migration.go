@@ -11,7 +11,7 @@ import (
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/config"
 )
 
-const MIGRATION_FILES_PATH = "file://migration"
+const MIGRATION_FILES_PATH = "file://db/migration"
 
 var (
 	mode    string

@@ -6,16 +6,17 @@ import (
 	"path/filepath"
 	"regexp"
 
+	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/store"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
 )
 
 type Service struct {
-	dataStore    Store
-	fileStore    FileStore
+	dataStore    store.DataStore
+	fileStore    store.FileStore
 	tokenService TokenGenerator
 }
 
-func NewService(dataStore Store, fileStore FileStore, tokenService TokenGenerator) Service {
+func NewService(dataStore store.DataStore, fileStore store.FileStore, tokenService TokenGenerator) Service {
 	return Service{
 		dataStore:    dataStore,
 		tokenService: tokenService,

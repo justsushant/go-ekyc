@@ -14,12 +14,3 @@ type ControllerInterface interface {
 	ValidateFile(fileName, fileType string) error
 	SaveUploadedFile(fileHeader *multipart.FileHeader) error
 }
-
-type Store interface {
-	GetPlanIdFromName(planName string) (int, error)
-	InsertClientData(payload types.SignupPayload, planId int, refreshToken string) error
-}
-
-type FileStore interface {
-	SaveFile(fileHeader *multipart.FileHeader) error
-}

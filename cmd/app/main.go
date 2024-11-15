@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/config"
+	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/db"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/server"
-	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/store"
 )
 
 func main() {
@@ -17,14 +17,14 @@ func main() {
 	}
 
 	// get new postgresql storage
-	pgStorage := store.NewPostgreSQLStorage(dsn)
+	pgStorage := db.NewPostgreSQLStorage(dsn)
 
 	// extracting minio connection vars from config (.env file)
 	minioSsl, err := strconv.ParseBool(config.Envs.MinioSSL)
 	if err != nil {
 		log.Fatalf("minio ssl config not found")
 	}
-	minioConn := &store.MinioConn{
+	minioConn := &db.MinioConn{
 		Endpoint: config.Envs.MinioEndpoint,
 		User:     config.Envs.MinioUser,
 		Password: config.Envs.MinioPassword,
@@ -32,7 +32,7 @@ func main() {
 	}
 
 	// get new minio storage
-	minioStorage := store.NewMinioClient(minioConn)
+	minioStorage := db.NewMinioClient(minioConn)
 
 	// craft the server address using env vars
 	host := config.Envs.Host
