@@ -28,14 +28,11 @@ func (m mockService) ValidatePayload(payload types.SignupPayload) error {
 	}
 }
 
-func (m mockService) GenerateKeyPair(payload types.SignupPayload) (*service.KeyPair, error) {
-	return &service.KeyPair{
-		AccessKey: "qwerty",
-		SecretKey: "quirkyfox",
-	}, nil
+func (m mockService) GenerateKeyPair(payload types.SignupPayload, hashPassworsd string) (*service.KeyPair, error) {
+	return service.NewKeyPair("qwerty", "quirkyfox", ""), nil
 }
 
-func (m mockService) SaveSignupData(payload types.SignupPayload) error {
+func (m mockService) SaveSignupData(payload types.SignupPayload, keyPair *service.KeyPair) error {
 	return nil
 }
 

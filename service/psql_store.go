@@ -16,8 +16,11 @@ func NewPsqlStore(db *sql.DB) PsqlStore {
 	}
 }
 
-func (s PsqlStore) InsertClientData(planId int, payload types.SignupPayload) error {
-	_, err := s.db.Exec("INSERT INTO client (name, email, plan_id) VALUES ($1, $2, $3)", payload.Name, payload.Email, planId)
+func (s PsqlStore) InsertClientData(planId int, payload types.SignupPayload, accessKey, secretKeyHash string) error {
+	_, err := s.db.Exec(
+		"INSERT INTO client (name, email, access_key, secret_key_hash, plan_id) VALUES ($1, $2, $3, $4, $5)",
+		payload.Name, payload.Email, accessKey, secretKeyHash, planId,
+	)
 	if err != nil {
 		return err
 	}
@@ -31,12 +34,4 @@ func (s PsqlStore) GetPlanIdFromName(planName string) (int, error) {
 		return 0, err
 	}
 	return planId, nil
-}
-
-func (s PsqlStore) UpdateClientKey(clientId int, accessKey, secretKeyHash string) error {
-	_, err := s.db.Exec("UPDATE client access_key = '$1', secret_key_hash = '@2' WHERE id = '$3'", accessKey, secretKeyHash, clientId)
-	if err != nil {
-		return err
-	}
-	return nil
 }

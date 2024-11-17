@@ -34,17 +34,20 @@ func (c Service) ValidatePayload(payload types.SignupPayload) error {
 	return nil
 }
 
-func (c Service) GenerateKeyPair(payload types.SignupPayload) (*KeyPair, error) {
-	return nil, c.keyService.GenerateKeyPair(payload)
+func (c Service) GenerateKeyPair(payload types.SignupPayload, hashPassword string) (*KeyPair, error) {
+	return c.keyService.GenerateKeyPair(payload, hashPassword)
 }
 
-func (c Service) SaveSignupData(payload types.SignupPayload) error {
+func (c Service) SaveSignupData(payload types.SignupPayload, keyPair *KeyPair) error {
 	planId, err := c.dataStore.GetPlanIdFromName(payload.Plan)
 	if err != nil {
 		return err
 	}
 
-	err = c.dataStore.InsertClientData(planId, payload)
+	accessKey, _ := keyPair.GetKeysPrivate()
+	secretKeyHash := keyPair.GetSecretKeyHash()
+
+	err = c.dataStore.InsertClientData(planId, payload, accessKey, secretKeyHash)
 	if err != nil {
 		return err
 	}

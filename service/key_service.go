@@ -19,67 +19,62 @@ var ErrMissingSecretKey = errors.New("secret key not found")
 var ErrGenKey = errors.New("error while generating key")
 
 type KeyPair struct {
-	AccessKey string
-	SecretKey string
+	accessKey     string
+	secretKey     string
+	secretKeyHash string
+}
+
+func NewKeyPair(accessKey, secretKey, secretKeyHash string) *KeyPair {
+	return &KeyPair{
+		accessKey:     accessKey,
+		secretKey:     secretKey,
+		secretKeyHash: secretKeyHash,
+	}
+}
+
+func (kp *KeyPair) GetKeysPrivate() (string, string) {
+	return kp.accessKey, kp.secretKey
+}
+func (kp *KeyPair) GetSecretKeyHash() string {
+	return kp.secretKeyHash
 }
 
 type KeyGenerator interface {
-	GenerateKeyPair(payload types.SignupPayload) error
-	GetAccessKey() (string, error)
-	GetSecretKey() (string, error)
-	GenerateSecretKeyHash(hashPassword string) (string, error)
+	GenerateKeyPair(payload types.SignupPayload, hashPassword string) (*KeyPair, error)
 }
 
-type KeyService struct {
-	accessKey string
-	secretKey string
-}
+type KeyService struct{}
 
 func NewKeyService() KeyService {
 	return KeyService{}
 }
 
-func (t KeyService) GenerateKeyPair(payload types.SignupPayload) error {
+func (t KeyService) GenerateKeyPair(payload types.SignupPayload, hashPassword string) (*KeyPair, error) {
 	accessKey, err := t.generateRandomString(ACCESS_KEY_LENGTH)
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrGenKey, err)
+		log.Printf("Error while generating access key: %v\n", err)
+		return nil, fmt.Errorf("%w: %w", ErrGenKey, err)
 	}
 
 	secretKey, err := t.generateRandomString(SECRET_KEY_LENGTH)
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrGenKey, err)
+		log.Printf("Error while generating secret key: %v\n", err)
+		return nil, fmt.Errorf("%w: %w", ErrGenKey, err)
 	}
 
-	t.accessKey = accessKey
-	t.secretKey = secretKey
-
-	return nil
-}
-
-func (t KeyService) GetAccessKey() (string, error) {
-	if t.accessKey == "" {
-		return "", ErrMissingAccessKey
-	} else {
-		return t.accessKey, nil
-	}
-}
-
-func (t KeyService) GetSecretKey() (string, error) {
-	if t.secretKey == "" {
-		return "", ErrMissingSecretKey
-	} else {
-		return t.secretKey, nil
-	}
-}
-
-func (t KeyService) GenerateSecretKeyHash(hashPassword string) (string, error) {
 	hashedKey, err := bcrypt.GenerateFromPassword([]byte(hashPassword), bcrypt.DefaultCost)
 	if err != nil {
 		log.Printf("Error while generating secret key hash: %v\n", err)
-		return "", err
+		return nil, fmt.Errorf("%w: %w", ErrGenKey, err)
 	}
 
-	return string(hashedKey), nil
+	keyPair := &KeyPair{
+		accessKey:     accessKey,
+		secretKey:     secretKey,
+		secretKeyHash: string(hashedKey),
+	}
+
+	return keyPair, nil
 }
 
 func (t KeyService) generateRandomString(n int) (string, error) {
