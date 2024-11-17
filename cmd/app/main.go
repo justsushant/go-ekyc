@@ -11,7 +11,7 @@ import (
 
 func main() {
 	// extracting pgsql dsn from env var
-	dsn := config.Envs.DB_DSN
+	dsn := config.Envs.DbDsn
 	if dsn == "" {
 		panic("Database DSN not found")
 	}

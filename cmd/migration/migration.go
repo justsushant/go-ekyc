@@ -30,7 +30,7 @@ func main() {
 	flag.Parse()
 
 	// extract database conn string
-	pgDsn := config.Envs.DB_DSN
+	pgDsn := config.Envs.DbDsn
 	if pgDsn == "" {
 		log.Fatalf("Error: PostgreSQL dsn not found\n")
 	}
