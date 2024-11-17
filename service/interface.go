@@ -10,7 +10,7 @@ import (
 type ControllerInterface interface {
 	ValidatePayload(payload types.SignupPayload) error
 	GenerateKeyPair(payload types.SignupPayload) (*KeyPair, error)
-	SaveSignupData(payload types.SignupPayload, refreshToken string) error
+	SaveSignupData(payload types.SignupPayload) error
 	ValidateFile(fileName, fileType string) error
 	SaveUploadedFile(fileHeader *multipart.FileHeader) error
 }

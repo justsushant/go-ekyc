@@ -38,7 +38,7 @@ func (c Service) GenerateKeyPair(payload types.SignupPayload) (*KeyPair, error) 
 	return nil, c.keyService.GenerateKeyPair(payload)
 }
 
-func (c Service) SaveSignupData(payload types.SignupPayload, refreshToken string) error {
+func (c Service) SaveSignupData(payload types.SignupPayload) error {
 	planId, err := c.dataStore.GetPlanIdFromName(payload.Plan)
 	if err != nil {
 		return err

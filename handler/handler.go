@@ -41,7 +41,7 @@ func (h *Handler) SignupHandler(c *gin.Context) {
 		return
 	}
 
-	err = h.service.SaveSignupData(payload, keyPair.SecretKey)
+	err = h.service.SaveSignupData(payload)
 	if err != nil {
 		c.JSON(400, gin.H{"errorMessage": err.Error()})
 		return

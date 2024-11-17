@@ -35,7 +35,7 @@ func (m mockService) GenerateKeyPair(payload types.SignupPayload) (*service.KeyP
 	}, nil
 }
 
-func (m mockService) SaveSignupData(payload types.SignupPayload, refreshToken string) error {
+func (m mockService) SaveSignupData(payload types.SignupPayload) error {
 	return nil
 }
 
