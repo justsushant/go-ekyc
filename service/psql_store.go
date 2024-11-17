@@ -32,3 +32,11 @@ func (s PsqlStore) GetPlanIdFromName(planName string) (int, error) {
 	}
 	return planId, nil
 }
+
+func (s PsqlStore) UpdateClientKey(clientId int, accessKey, secretKeyHash string) error {
+	_, err := s.db.Exec("UPDATE client access_key = '$1', secret_key_hash = '@2' WHERE id = '$3'", accessKey, secretKeyHash, clientId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
