@@ -3,6 +3,7 @@ package service
 import (
 	"crypto/rand"
 	"errors"
+	"fmt"
 	"log"
 	"math/big"
 
@@ -15,6 +16,7 @@ const SECRET_KEY_LENGTH = 20
 
 var ErrMissingAccessKey = errors.New("access key not found")
 var ErrMissingSecretKey = errors.New("secret key not found")
+var ErrGenKey = errors.New("error while generating key")
 
 type KeyPair struct {
 	AccessKey string
@@ -22,7 +24,7 @@ type KeyPair struct {
 }
 
 type KeyGenerator interface {
-	GenerateKeyPair(payload types.SignupPayload) (*KeyPair, error)
+	GenerateKeyPair(payload types.SignupPayload) error
 }
 
 type KeyService struct {
@@ -34,21 +36,21 @@ func NewKeyService() KeyService {
 	return KeyService{}
 }
 
-func (t KeyService) GenerateKeyPair(payload types.SignupPayload) (*KeyPair, error) {
+func (t KeyService) GenerateKeyPair(payload types.SignupPayload) error {
 	accessKey, err := t.generateRandomString(ACCESS_KEY_LENGTH)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("%w: %w", ErrGenKey, err)
 	}
 
 	secretKey, err := t.generateRandomString(SECRET_KEY_LENGTH)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("%w: %w", ErrGenKey, err)
 	}
 
-	return &KeyPair{
-		AccessKey: accessKey,
-		SecretKey: secretKey,
-	}, nil
+	t.accessKey = accessKey
+	t.secretKey = secretKey
+
+	return nil
 }
 
 func (t KeyService) GetAccessKey() (string, error) {

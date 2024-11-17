@@ -35,7 +35,7 @@ func (c Service) ValidatePayload(payload types.SignupPayload) error {
 }
 
 func (c Service) GenerateKeyPair(payload types.SignupPayload) (*KeyPair, error) {
-	return c.keyService.GenerateKeyPair(payload)
+	return nil, c.keyService.GenerateKeyPair(payload)
 }
 
 func (c Service) SaveSignupData(payload types.SignupPayload, refreshToken string) error {
