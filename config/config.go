@@ -7,16 +7,15 @@ import (
 )
 
 type Config struct {
-	Host                 string
-	Port                 string
-	DB_DSN               string
-	Access_token_secret  string
-	Refresh_token_secret string
-	MinioUser            string
-	MinioPassword        string
-	MinioEndpoint        string
-	MinioSSL             string
-	MinioBucket          string
+	Host          string
+	Port          string
+	DbDsn         string
+	HashPassword  string
+	MinioUser     string
+	MinioPassword string
+	MinioEndpoint string
+	MinioSSL      string
+	MinioBucket   string
 }
 
 var Envs = initConfig()
@@ -28,16 +27,15 @@ func initConfig() *Config {
 	}
 
 	return &Config{
-		Host:                 getEnv("HOST", ""),
-		Port:                 getEnv("PORT", "8080"),
-		DB_DSN:               getEnv("DB_DSN", ""),
-		Access_token_secret:  getEnv("ACCESS_TOKEN_SECRET", ""),
-		Refresh_token_secret: getEnv("REFRESH_TOKEN_SECRET", ""),
-		MinioUser:            getEnv("MINIO_USER", ""),
-		MinioPassword:        getEnv("MINIO_PASSWORD", ""),
-		MinioEndpoint:        getEnv("MINIO_ENDPOINT", ""),
-		MinioSSL:             getEnv("MINIO_SSL", ""),
-		MinioBucket:          getEnv("MINIO_BUCKET_NAME", ""),
+		Host:          getEnv("HOST", ""),
+		Port:          getEnv("PORT", "8080"),
+		DbDsn:         getEnv("DB_DSN", ""),
+		HashPassword:  getEnv("HASH_PASSWORD", ""),
+		MinioUser:     getEnv("MINIO_USER", ""),
+		MinioPassword: getEnv("MINIO_PASSWORD", ""),
+		MinioEndpoint: getEnv("MINIO_ENDPOINT", ""),
+		MinioSSL:      getEnv("MINIO_SSL", ""),
+		MinioBucket:   getEnv("MINIO_BUCKET_NAME", ""),
 	}
 }
 
