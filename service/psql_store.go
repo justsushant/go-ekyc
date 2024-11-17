@@ -2,7 +2,6 @@ package service
 
 import (
 	"database/sql"
-	"log"
 
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
 )
@@ -17,9 +16,8 @@ func NewPsqlStore(db *sql.DB) PsqlStore {
 	}
 }
 
-func (s PsqlStore) InsertClientData(payload types.SignupPayload, planId int, refreshToken string) error {
-	log.Println(payload, planId, refreshToken)
-	_, err := s.db.Exec("INSERT INTO client (name, email, plan_id, refresh_token) VALUES ($1, $2, $3, $4)", payload.Name, payload.Email, planId, refreshToken)
+func (s PsqlStore) InsertClientData(planId int, payload types.SignupPayload) error {
+	_, err := s.db.Exec("INSERT INTO client (name, email, plan_id) VALUES ($1, $2, $3)", payload.Name, payload.Email, planId)
 	if err != nil {
 		return err
 	}

@@ -9,7 +9,7 @@ import (
 // TODO: Change the interface name
 type ControllerInterface interface {
 	ValidatePayload(payload types.SignupPayload) error
-	GenerateTokenPair(payload types.SignupPayload) (*TokenPair, error)
+	GenerateKeyPair(payload types.SignupPayload) (*KeyPair, error)
 	SaveSignupData(payload types.SignupPayload, refreshToken string) error
 	ValidateFile(fileName, fileType string) error
 	SaveUploadedFile(fileHeader *multipart.FileHeader) error

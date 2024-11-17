@@ -28,10 +28,10 @@ func (m mockService) ValidatePayload(payload types.SignupPayload) error {
 	}
 }
 
-func (m mockService) GenerateTokenPair(payload types.SignupPayload) (*service.TokenPair, error) {
-	return &service.TokenPair{
-		AccessToken:  "qwerty",
-		RefreshToken: "quirkyfox",
+func (m mockService) GenerateKeyPair(payload types.SignupPayload) (*service.KeyPair, error) {
+	return &service.KeyPair{
+		AccessKey: "qwerty",
+		SecretKey: "quirkyfox",
 	}, nil
 }
 

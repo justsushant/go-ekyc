@@ -35,21 +35,21 @@ func (h *Handler) SignupHandler(c *gin.Context) {
 		return
 	}
 
-	tokenPair, err := h.service.GenerateTokenPair(payload)
+	keyPair, err := h.service.GenerateKeyPair(payload)
 	if err != nil {
 		c.JSON(400, gin.H{"errorMessage": err.Error()})
 		return
 	}
 
-	err = h.service.SaveSignupData(payload, tokenPair.RefreshToken)
+	err = h.service.SaveSignupData(payload, keyPair.SecretKey)
 	if err != nil {
 		c.JSON(400, gin.H{"errorMessage": err.Error()})
 		return
 	}
 
 	c.JSON(200, gin.H{
-		"accessKey": tokenPair.AccessToken,
-		"secretKey": tokenPair.RefreshToken,
+		"accessKey": keyPair.AccessKey,
+		"secretKey": keyPair.SecretKey,
 	})
 }
 

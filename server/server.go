@@ -39,8 +39,8 @@ func (s *Server) Run() {
 
 	psqlStore := service.NewPsqlStore(s.db)
 	minioStore := service.NewMinioStore(s.minio, config.Envs.MinioBucket)
-	tokenService := service.NewTokenService(config.Envs.Access_token_secret, config.Envs.Refresh_token_secret)
-	service := service.NewService(psqlStore, minioStore, tokenService)
+	keyService := service.NewKeyService()
+	service := service.NewService(psqlStore, minioStore, keyService)
 
 	handler := handler.NewHandler(service)
 	handler.RegisterRoutes(apiRouter)

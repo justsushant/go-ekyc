@@ -10,16 +10,16 @@ import (
 )
 
 type Service struct {
-	dataStore    store.DataStore
-	fileStore    store.FileStore
-	tokenService TokenGenerator
+	dataStore  store.DataStore
+	fileStore  store.FileStore
+	keyService KeyGenerator
 }
 
-func NewService(dataStore store.DataStore, fileStore store.FileStore, tokenService TokenGenerator) Service {
+func NewService(dataStore store.DataStore, fileStore store.FileStore, keyService KeyGenerator) Service {
 	return Service{
-		dataStore:    dataStore,
-		tokenService: tokenService,
-		fileStore:    fileStore,
+		dataStore:  dataStore,
+		keyService: keyService,
+		fileStore:  fileStore,
 	}
 }
 
@@ -34,17 +34,17 @@ func (c Service) ValidatePayload(payload types.SignupPayload) error {
 	return nil
 }
 
-func (c Service) GenerateTokenPair(payload types.SignupPayload) (*TokenPair, error) {
-	return c.tokenService.GenerateTokenPair(payload)
+func (c Service) GenerateKeyPair(payload types.SignupPayload) (*KeyPair, error) {
+	return c.keyService.GenerateKeyPair(payload)
 }
 
 func (c Service) SaveSignupData(payload types.SignupPayload, refreshToken string) error {
-	planId, err := c.dataStore.GetPlanIdFromName(payload.Name)
+	planId, err := c.dataStore.GetPlanIdFromName(payload.Plan)
 	if err != nil {
 		return err
 	}
 
-	err = c.dataStore.InsertClientData(payload, planId, refreshToken)
+	err = c.dataStore.InsertClientData(planId, payload)
 	if err != nil {
 		return err
 	}
