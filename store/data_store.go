@@ -7,4 +7,5 @@ import (
 type DataStore interface {
 	GetPlanIdFromName(planName string) (int, error)
 	InsertClientData(planId int, payload types.SignupPayload, accessKey, secretKeyHash string) error
+	GetClientFromAccessKey(accessKey string) (types.ClientData, error)
 }
