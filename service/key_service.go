@@ -25,6 +25,9 @@ type KeyPair struct {
 
 type KeyGenerator interface {
 	GenerateKeyPair(payload types.SignupPayload) error
+	GetAccessKey() (string, error)
+	GetSecretKey() (string, error)
+	GenerateSecretKeyHash(hashPassword string) (string, error)
 }
 
 type KeyService struct {
