@@ -36,7 +36,8 @@ func initConfig() *Config {
 		MinioUser:            getEnv("MINIO_USER", ""),
 		MinioPassword:        getEnv("MINIO_PASSWORD", ""),
 		MinioEndpoint:        getEnv("MINIO_ENDPOINT", ""),
-		MinioBucket:          getEnv("MINIO_BUCKET", ""),
+		MinioSSL:             getEnv("MINIO_SSL", ""),
+		MinioBucket:          getEnv("MINIO_BUCKET_NAME", ""),
 	}
 }
 

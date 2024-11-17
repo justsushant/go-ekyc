@@ -20,6 +20,6 @@ func NewPostgreSQLStorage(dsn string) *sql.DB {
 		log.Fatal(err)
 	}
 
-	log.Println("PostgreSQL Database connected")
+	log.Println("PostgreSQL database connected")
 	return db
 }
