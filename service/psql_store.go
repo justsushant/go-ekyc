@@ -39,10 +39,20 @@ func (s PsqlStore) GetPlanIdFromName(planName string) (int, error) {
 }
 
 func (s PsqlStore) GetClientFromAccessKey(accessKey string) (*types.ClientData, error) {
-	var clientData *types.ClientData
-	err := s.db.QueryRow("SELECT * FROM client WHERE access_key = $1", accessKey).Scan(clientData)
+	var clientData types.ClientData
+	err := s.db.QueryRow(
+		"SELECT id, name, email, plan_id, access_key, secret_key_hash FROM client WHERE access_key = $1",
+		accessKey,
+	).Scan(
+		&clientData.Id,
+		&clientData.Name,
+		&clientData.Email,
+		&clientData.PlanID,
+		&clientData.AccessKey,
+		&clientData.SecretKeyHash,
+	)
 	if err != nil {
 		return nil, err
 	}
-	return clientData, nil
+	return &clientData, nil
 }
