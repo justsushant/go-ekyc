@@ -25,7 +25,7 @@ var (
 func main() {
 	cfg, err := config.InitConfig()
 	if err != nil {
-		log.Fatalf("Error while config init: %w", err)
+		log.Fatalf("Error while config init: %v", err)
 	}
 
 	// set the flags

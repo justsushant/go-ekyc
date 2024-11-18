@@ -40,7 +40,9 @@ func (s *Server) Run() {
 	protectedRouter.Use(authMiddleware.Middleware())
 
 	keyService := service.NewKeyService()
-	service := service.NewService(s.db, s.minio, keyService)
+	dummyFaceMatch := &service.DummyFaceMatchService{}
+
+	service := service.NewService(s.db, s.minio, keyService, dummyFaceMatch)
 	handler := handler.NewHandler(service)
 	handler.RegisterRoutes(unprotectedRouter)
 	handler.RegisterProtectedRoutes(protectedRouter)

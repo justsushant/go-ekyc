@@ -13,13 +13,15 @@ type Service struct {
 	dataStore  store.DataStore
 	fileStore  store.FileStore
 	keyService KeyGenerator
+	faceMatch  FaceMatcher
 }
 
-func NewService(dataStore store.DataStore, fileStore store.FileStore, keyService KeyGenerator) Service {
+func NewService(dataStore store.DataStore, fileStore store.FileStore, keyService KeyGenerator, faceMatch FaceMatcher) Service {
 	return Service{
 		dataStore:  dataStore,
 		keyService: keyService,
 		fileStore:  fileStore,
+		faceMatch:  faceMatch,
 	}
 }
 
@@ -113,7 +115,7 @@ func (c Service) ValidateImage(payload types.FaceMatchPayload) error {
 }
 
 func (c Service) CalcFaceMatchScore(payload types.FaceMatchPayload) (int, error) {
-	return 0, nil
+	return c.faceMatch.CalcFaceMatchScore(payload)
 }
 
 func validateFileType(fileType string) error {
