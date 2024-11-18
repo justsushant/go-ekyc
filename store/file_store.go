@@ -3,5 +3,5 @@ package store
 import "mime/multipart"
 
 type FileStore interface {
-	SaveFile(fileHeader *multipart.FileHeader) error
+	SaveFileToBucket(fileHeader *multipart.FileHeader, objectName string) error
 }
