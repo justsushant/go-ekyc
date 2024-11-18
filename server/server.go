@@ -30,6 +30,12 @@ func NewServer(addr string, db *sql.DB, minio *minio.Client) *Server {
 func (s *Server) Run() {
 	router := gin.Default()
 
+	// load configs
+	cfg, err := config.InitConfig()
+	if err != nil {
+		log.Fatalf("Error while config init: %v", err)
+	}
+
 	apiRouter := router.Group("/api/v1")
 	apiRouter.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -38,7 +44,7 @@ func (s *Server) Run() {
 	})
 
 	psqlStore := service.NewPsqlStore(s.db)
-	minioStore := service.NewMinioStore(s.minio, config.Envs.MinioBucket)
+	minioStore := service.NewMinioStore(s.minio, cfg.MinioBucket)
 	keyService := service.NewKeyService()
 	service := service.NewService(psqlStore, minioStore, keyService)
 

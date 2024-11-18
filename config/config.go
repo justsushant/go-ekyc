@@ -1,47 +1,38 @@
 package config
 
 import (
-	"os"
+	"log"
 
+	"github.com/caarlos0/env/v11"
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	Host          string
-	Port          string
-	DbDsn         string
-	HashPassword  string
-	MinioUser     string
-	MinioPassword string
-	MinioEndpoint string
-	MinioSSL      string
-	MinioBucket   string
+	Host          string `env:"HOST"`
+	Port          string `env:"PORT,required"`
+	DbDsn         string `env:"DB_DSN,required"`
+	HashPassword  string `env:"HASH_PASSWORD,required"`
+	MinioUser     string `env:"MINIO_USER,required"`
+	MinioPassword string `env:"MINIO_PASSWORD,required"`
+	MinioEndpoint string `env:"MINIO_ENDPOINT,required"`
+	MinioSSL      bool   `env:"MINIO_SSL,required"`
+	MinioBucket   string `env:"MINIO_BUCKET_NAME,required"`
 }
 
-var Envs = initConfig()
-
-func initConfig() *Config {
+func InitConfig() (*Config, error) {
+	// load the env file
 	err := godotenv.Load()
 	if err != nil {
-		panic("Error loading .env file")
+		return nil, err
 	}
 
-	return &Config{
-		Host:          getEnv("HOST", ""),
-		Port:          getEnv("PORT", "8080"),
-		DbDsn:         getEnv("DB_DSN", ""),
-		HashPassword:  getEnv("HASH_PASSWORD", ""),
-		MinioUser:     getEnv("MINIO_USER", ""),
-		MinioPassword: getEnv("MINIO_PASSWORD", ""),
-		MinioEndpoint: getEnv("MINIO_ENDPOINT", ""),
-		MinioSSL:      getEnv("MINIO_SSL", ""),
-		MinioBucket:   getEnv("MINIO_BUCKET_NAME", ""),
+	// parse the env file
+	var cfg Config
+	err = env.Parse(&cfg)
+	if err != nil {
+		log.Println(err)
+		return nil, err
 	}
-}
 
-func getEnv(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
-	}
-	return fallback
+	return &cfg, nil
 }

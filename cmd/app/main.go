@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"strconv"
 
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/config"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/db"
@@ -10,8 +9,14 @@ import (
 )
 
 func main() {
+	// load configs
+	cfg, err := config.InitConfig()
+	if err != nil {
+		log.Fatalf("Error while config init: %v", err)
+	}
+
 	// extracting pgsql dsn from env var
-	dsn := config.Envs.DbDsn
+	dsn := cfg.DbDsn
 	if dsn == "" {
 		panic("Database DSN not found")
 	}
@@ -19,24 +24,19 @@ func main() {
 	// get new postgresql storage
 	pgStorage := db.NewPostgreSQLStorage(dsn)
 
-	// extracting minio connection vars from config (.env file)
-	minioSsl, err := strconv.ParseBool(config.Envs.MinioSSL)
-	if err != nil {
-		log.Fatalf("minio ssl config not found")
-	}
 	minioConn := &db.MinioConn{
-		Endpoint: config.Envs.MinioEndpoint,
-		User:     config.Envs.MinioUser,
-		Password: config.Envs.MinioPassword,
-		Ssl:      minioSsl,
+		Endpoint: cfg.MinioEndpoint,
+		User:     cfg.MinioUser,
+		Password: cfg.MinioPassword,
+		Ssl:      cfg.MinioSSL,
 	}
 
 	// get new minio storage
 	minioStorage := db.NewMinioClient(minioConn)
 
 	// craft the server address using env vars
-	host := config.Envs.Host
-	port := config.Envs.Port
+	host := cfg.Host
+	port := cfg.Port
 	addr := host + ":" + port
 
 	// init and start the server

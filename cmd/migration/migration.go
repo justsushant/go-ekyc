@@ -23,6 +23,11 @@ var (
 // TODO: Implement the up and down with steps, by default only one step up or down
 
 func main() {
+	cfg, err := config.InitConfig()
+	if err != nil {
+		log.Fatalf("Error while config init: %w", err)
+	}
+
 	// set the flags
 	flag.StringVar(&mode, "m", "", "migrate [up|down|status]")
 	flag.IntVar(&migVer, "v", 0, "which migration version to apply")
@@ -30,7 +35,7 @@ func main() {
 	flag.Parse()
 
 	// extract database conn string
-	pgDsn := config.Envs.DbDsn
+	pgDsn := cfg.DbDsn
 	if pgDsn == "" {
 		log.Fatalf("Error: PostgreSQL dsn not found\n")
 	}
