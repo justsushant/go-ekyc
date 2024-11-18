@@ -68,3 +68,7 @@ func (s PsqlStore) InsertUploadMetaData(uploadMetaData *types.UploadMetaData) er
 
 	return nil
 }
+
+func (s PsqlStore) GetMetaDataByUUID(imgUuid string) (*types.UploadMetaData, error) {
+	return nil, nil
+}

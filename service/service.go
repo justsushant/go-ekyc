@@ -84,8 +84,34 @@ func (c Service) SaveFile(fileHeader *multipart.FileHeader, uploadMetaData *type
 }
 
 func (c Service) ValidateImage(payload types.FaceMatchPayload) error {
+	// fetching meta data of images by uuid
+	imgData1, err := c.dataStore.GetMetaDataByUUID(payload.ImageID1)
+	if err != nil {
+		return err
+	}
+	imgData2, err := c.dataStore.GetMetaDataByUUID(payload.ImageID2)
+	if err != nil {
+		return err
+	}
+
+	// if image data is nil (for nonexistent uuid case)
+	if imgData1 == nil || imgData2 == nil {
+		return ErrInvalidImgId
+	}
+
+	// if image belong to different clients
+	if imgData1.ClientID != imgData2.ClientID {
+		return ErrInvalidImgId
+	}
+
+	// if images are not of faces
+	if imgData1.Type != types.FaceType || imgData2.Type != types.FaceType {
+		return ErrNotFaceImg
+	}
+
 	return nil
 }
+
 func (c Service) CalcFaceMatchScore(payload types.FaceMatchPayload) (int, error) {
 	return 0, nil
 }

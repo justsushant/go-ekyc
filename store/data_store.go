@@ -9,4 +9,5 @@ type DataStore interface {
 	InsertClientData(planId int, payload types.SignupPayload, accessKey, secretKeyHash string) error
 	GetClientFromAccessKey(accessKey string) (*types.ClientData, error)
 	InsertUploadMetaData(uploadMetaData *types.UploadMetaData) error
+	GetMetaDataByUUID(imgUuid string) (*types.UploadMetaData, error)
 }
