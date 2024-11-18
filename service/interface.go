@@ -12,5 +12,5 @@ type ControllerInterface interface {
 	GenerateKeyPair() (*KeyPair, error)
 	SaveSignupData(payload types.SignupPayload, keyPair *KeyPair) error
 	ValidateFile(fileName, fileType string) error
-	SaveUploadedFile(fileHeader *multipart.FileHeader) error
+	SaveFile(fileHeader *multipart.FileHeader, uploadMetaData *types.UploadMetaData) error
 }

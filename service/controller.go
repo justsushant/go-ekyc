@@ -69,11 +69,17 @@ func (c Service) ValidateFile(fileName, fileType string) error {
 	return nil
 }
 
-func (c Service) SaveUploadedFile(fileHeader *multipart.FileHeader) error {
-	err := c.fileStore.SaveFile(fileHeader)
+func (c Service) SaveFile(fileHeader *multipart.FileHeader, uploadMetaData *types.UploadMetaData) error {
+	err := c.fileStore.SaveFileToBucket(fileHeader, uploadMetaData.FilePath)
 	if err != nil {
 		return err
 	}
+
+	err = c.dataStore.InsertUploadMetaData(uploadMetaData)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

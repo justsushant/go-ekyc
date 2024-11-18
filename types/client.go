@@ -8,3 +8,10 @@ type ClientData struct {
 	AccessKey     string `json:"access_key"`
 	SecretKeyHash string `json:"secret_key_hash"`
 }
+
+type UploadMetaData struct {
+	Type       string `json:"type"`
+	ClientID   int    `json:"client_id"`
+	FilePath   string `json:"file_path"`
+	FileSizeKB int64  `json:"file_size_kb"`
+}
