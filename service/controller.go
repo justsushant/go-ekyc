@@ -34,8 +34,8 @@ func (c Service) ValidatePayload(payload types.SignupPayload) error {
 	return nil
 }
 
-func (c Service) GenerateKeyPair(payload types.SignupPayload, hashPassword string) (*KeyPair, error) {
-	return c.keyService.GenerateKeyPair(payload, hashPassword)
+func (c Service) GenerateKeyPair() (*KeyPair, error) {
+	return c.keyService.GenerateKeyPair()
 }
 
 func (c Service) SaveSignupData(payload types.SignupPayload, keyPair *KeyPair) error {

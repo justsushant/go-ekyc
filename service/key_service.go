@@ -7,7 +7,6 @@ import (
 	"log"
 	"math/big"
 
-	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -35,12 +34,13 @@ func NewKeyPair(accessKey, secretKey, secretKeyHash string) *KeyPair {
 func (kp *KeyPair) GetKeysPrivate() (string, string) {
 	return kp.accessKey, kp.secretKey
 }
+
 func (kp *KeyPair) GetSecretKeyHash() string {
 	return kp.secretKeyHash
 }
 
 type KeyGenerator interface {
-	GenerateKeyPair(payload types.SignupPayload, hashPassword string) (*KeyPair, error)
+	GenerateKeyPair() (*KeyPair, error)
 }
 
 type KeyService struct{}
@@ -49,7 +49,7 @@ func NewKeyService() KeyService {
 	return KeyService{}
 }
 
-func (t KeyService) GenerateKeyPair(payload types.SignupPayload, hashPassword string) (*KeyPair, error) {
+func (t KeyService) GenerateKeyPair() (*KeyPair, error) {
 	accessKey, err := t.generateRandomString(ACCESS_KEY_LENGTH)
 	if err != nil {
 		log.Printf("Error while generating access key: %v\n", err)
@@ -62,7 +62,7 @@ func (t KeyService) GenerateKeyPair(payload types.SignupPayload, hashPassword st
 		return nil, fmt.Errorf("%w: %w", ErrGenKey, err)
 	}
 
-	hashedKey, err := bcrypt.GenerateFromPassword([]byte(hashPassword), bcrypt.DefaultCost)
+	hashedKey, err := bcrypt.GenerateFromPassword([]byte(secretKey), bcrypt.DefaultCost)
 	if err != nil {
 		log.Printf("Error while generating secret key hash: %v\n", err)
 		return nil, fmt.Errorf("%w: %w", ErrGenKey, err)

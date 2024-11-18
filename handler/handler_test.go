@@ -28,7 +28,7 @@ func (m mockService) ValidatePayload(payload types.SignupPayload) error {
 	}
 }
 
-func (m mockService) GenerateKeyPair(payload types.SignupPayload, hashPassworsd string) (*service.KeyPair, error) {
+func (m mockService) GenerateKeyPair() (*service.KeyPair, error) {
 	return service.NewKeyPair("qwerty", "quirkyfox", ""), nil
 }
 

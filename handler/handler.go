@@ -8,8 +8,6 @@ import (
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
 )
 
-const TEMP_HASH_PASSWORD = "temp"
-
 type Handler struct {
 	service service.ControllerInterface
 }
@@ -41,7 +39,7 @@ func (h *Handler) SignupHandler(c *gin.Context) {
 		return
 	}
 
-	keyPair, err := h.service.GenerateKeyPair(payload, TEMP_HASH_PASSWORD)
+	keyPair, err := h.service.GenerateKeyPair()
 	if err != nil {
 		c.JSON(400, gin.H{"errorMessage": err.Error()})
 		return
