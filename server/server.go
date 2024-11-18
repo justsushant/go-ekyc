@@ -1,7 +1,6 @@
 package server
 
 import (
-	"database/sql"
 	"log"
 	"net/http"
 
@@ -9,16 +8,17 @@ import (
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/config"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/handler"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/service"
+	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/store"
 	"github.com/minio/minio-go/v7"
 )
 
 type Server struct {
 	addr  string
-	db    *sql.DB
+	db    store.DataStore
 	minio *minio.Client
 }
 
-func NewServer(addr string, db *sql.DB, minio *minio.Client) *Server {
+func NewServer(addr string, db store.DataStore, minio *minio.Client) *Server {
 	return &Server{
 		addr:  addr,
 		db:    db,
@@ -43,10 +43,9 @@ func (s *Server) Run() {
 		})
 	})
 
-	psqlStore := service.NewPsqlStore(s.db)
 	minioStore := service.NewMinioStore(s.minio, cfg.MinioBucket)
 	keyService := service.NewKeyService()
-	service := service.NewService(psqlStore, minioStore, keyService)
+	service := service.NewService(s.db, minioStore, keyService)
 
 	handler := handler.NewHandler(service)
 	handler.RegisterRoutes(apiRouter)

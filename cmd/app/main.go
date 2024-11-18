@@ -6,6 +6,7 @@ import (
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/config"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/db"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/server"
+	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/service"
 )
 
 func main() {
@@ -15,14 +16,8 @@ func main() {
 		log.Fatalf("Error while config init: %v", err)
 	}
 
-	// extracting pgsql dsn from env var
-	dsn := cfg.DbDsn
-	if dsn == "" {
-		panic("Database DSN not found")
-	}
-
-	// get new postgresql storage
-	pgStorage := db.NewPostgreSQLStorage(dsn)
+	// get psql store
+	psqlStore := service.NewPsqlStore(cfg.DbDsn)
 
 	minioConn := &db.MinioConn{
 		Endpoint: cfg.MinioEndpoint,
@@ -40,6 +35,6 @@ func main() {
 	addr := host + ":" + port
 
 	// init and start the server
-	server := server.NewServer(addr, pgStorage, minioStorage)
+	server := server.NewServer(addr, psqlStore, minioStorage)
 	server.Run()
 }

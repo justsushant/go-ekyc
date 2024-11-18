@@ -3,6 +3,7 @@ package service
 import (
 	"database/sql"
 
+	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/db"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
 )
 
@@ -10,9 +11,10 @@ type PsqlStore struct {
 	db *sql.DB
 }
 
-func NewPsqlStore(db *sql.DB) PsqlStore {
+func NewPsqlStore(dsn string) PsqlStore {
+	psqlClient := db.NewPostgreSQLStorage(dsn)
 	return PsqlStore{
-		db: db,
+		db: psqlClient,
 	}
 }
 
