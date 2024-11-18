@@ -24,6 +24,10 @@ func (h *Handler) RegisterRoutes(router *gin.RouterGroup) {
 	router.POST("/signup", h.SignupHandler)
 }
 
+func (h *Handler) RegisterProtectedRoutes(router *gin.RouterGroup) {
+	router.POST("/upload", h.FileUploadHandler)
+}
+
 func (h *Handler) SignupHandler(c *gin.Context) {
 	var payload types.SignupPayload
 	err := json.NewDecoder(c.Request.Body).Decode(&payload)
@@ -81,4 +85,11 @@ func (h *Handler) FileUploadHandler(c *gin.Context) {
 		c.JSON(500, gin.H{"errorMessage": err.Error()})
 		return
 	}
+
+	// save data in psql
+
+	// replace this with proper uuid
+	c.JSON(200, gin.H{
+		"message": "uploaded",
+	})
 }

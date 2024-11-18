@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/handler"
+	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/middleware"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/service"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/store"
 )
@@ -24,22 +25,25 @@ func NewServer(addr string, db store.DataStore, minio store.FileStore) *Server {
 	}
 }
 
-// TODO: Implement the auth middleware later
 func (s *Server) Run() {
 	router := gin.Default()
 
-	apiRouter := router.Group("/api/v1")
-	apiRouter.GET("/health", func(c *gin.Context) {
+	unprotectedRouter := router.Group("/api/v1")
+	unprotectedRouter.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "OK",
 		})
 	})
 
+	authMiddleware := middleware.NewAuthMiddleware(s.db)
+	protectedRouter := router.Group("/api/v1")
+	protectedRouter.Use(authMiddleware.Middleware())
+
 	keyService := service.NewKeyService()
 	service := service.NewService(s.db, s.minio, keyService)
-
 	handler := handler.NewHandler(service)
-	handler.RegisterRoutes(apiRouter)
+	handler.RegisterRoutes(unprotectedRouter)
+	handler.RegisterProtectedRoutes(protectedRouter)
 
 	log.Println("Server listening on", s.addr)
 	if err := http.ListenAndServe(s.addr, router); err != nil {
