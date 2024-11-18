@@ -56,3 +56,15 @@ func (s PsqlStore) GetClientFromAccessKey(accessKey string) (*types.ClientData, 
 	}
 	return &clientData, nil
 }
+
+func (s PsqlStore) InsertUploadMetaData(uploadMetaData *types.UploadMetaData) error {
+	_, err := s.db.Exec(
+		"INSERT INTO upload (type, client_id, file_path, file_size_kb) VALUES ($1, $2, $3, $4)",
+		uploadMetaData.Type, uploadMetaData.ClientID, uploadMetaData.FilePath, uploadMetaData.FileSizeKB,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
