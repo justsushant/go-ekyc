@@ -49,7 +49,7 @@ func (m mockService) ValidateFile(fileName, fileType string) error {
 	return nil
 }
 
-func (m mockService) SaveUploadedFile(fileHeader *multipart.FileHeader) error {
+func (m mockService) SaveFile(fileHeader *multipart.FileHeader, uploadMetaData *types.UploadMetaData) error {
 	return nil
 }
 

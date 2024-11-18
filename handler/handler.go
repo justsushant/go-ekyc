@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/service"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
 )
@@ -77,17 +78,29 @@ func (h *Handler) FileUploadHandler(c *gin.Context) {
 		return
 	}
 
-	// save the file to bucket
-	err = h.service.SaveUploadedFile(fileHeader)
+	// generating UUID for file name
+	clientID, ok := c.Get("client_id")
+	if !ok {
+		// fetch clientID here using
+	}
+
+	objectName := uuid.NewString()
+	uploadMetaData := &types.UploadMetaData{
+		Type:       fileType,
+		ClientID:   clientID.(int),
+		FilePath:   objectName,
+		FileSizeKB: fileHeader.Size,
+	}
+
+	// save the file to bucket and psql
+	err = h.service.SaveFile(fileHeader, uploadMetaData)
 	if err != nil {
 		c.JSON(500, gin.H{"errorMessage": err.Error()})
 		return
 	}
 
-	// save data in psql
-
 	// replace this with proper uuid
 	c.JSON(200, gin.H{
-		"message": "uploaded",
+		"id": objectName,
 	})
 }
