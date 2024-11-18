@@ -26,6 +26,7 @@ func (am *AuthMiddleware) Middleware() gin.HandlerFunc {
 			return
 		}
 
+		// TODO: A bug here, investigate. [GIN-debug] [WARNING] Headers were already written. Wanted to override status code 500 with 200. /api/v1/face-match
 		// get user details on the basis of access key
 		clientData, err := am.store.GetClientFromAccessKey(accessKey)
 		if err != nil {

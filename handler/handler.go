@@ -25,6 +25,7 @@ func (h *Handler) RegisterRoutes(router *gin.RouterGroup) {
 
 func (h *Handler) RegisterProtectedRoutes(router *gin.RouterGroup) {
 	router.POST("/upload", h.FileUploadHandler)
+	router.POST("/face-match", h.FaceMatchHandler)
 }
 
 func (h *Handler) SignupHandler(c *gin.Context) {

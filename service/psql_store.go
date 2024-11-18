@@ -72,7 +72,7 @@ func (s PsqlStore) InsertUploadMetaData(uploadMetaData *types.UploadMetaData) er
 func (s PsqlStore) GetMetaDataByUUID(imgUuid string) (*types.UploadMetaData, error) {
 	var uploadData types.UploadMetaData
 	err := s.db.QueryRow(
-		"SELECT type, client_id, file_path, file_size_kb FROM client WHERE file_path = $1",
+		"SELECT type, client_id, file_path, file_size_kb FROM upload WHERE file_path = $1",
 		imgUuid,
 	).Scan(
 		&uploadData.Type,
