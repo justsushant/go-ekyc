@@ -21,6 +21,11 @@ func (am *AuthMiddleware) Middleware() gin.HandlerFunc {
 		accessKey := c.GetHeader("accessKey")
 		secretKey := c.GetHeader("secretKey")
 
+		if len(accessKey) == 0 || len(secretKey) == 0 {
+			c.JSON(401, gin.H{"errorMessage": "invalid access or secret key"})
+			return
+		}
+
 		// get user details on the basis of access key
 		clientData, err := am.store.GetClientFromAccessKey(accessKey)
 		if err != nil {
