@@ -5,6 +5,7 @@ import (
 	"log"
 	"mime/multipart"
 
+	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/db"
 	"github.com/minio/minio-go/v7"
 )
 
@@ -13,13 +14,18 @@ type MinioStore struct {
 	bucketName string
 }
 
-func NewMinioStore(client *minio.Client, bucketName string) MinioStore {
+func NewMinioStore(conn *db.MinioConn, bucketName string) MinioStore {
+	// get new minio client
+	client := db.NewMinioClient(conn)
+
+	// check if bucket exists
 	ctx := context.Background()
 	isExists, err := client.BucketExists(ctx, bucketName)
 	if err != nil {
 		log.Fatalf("Error while setting up minio store: %v", err)
 	}
 
+	// if not, make one
 	if !isExists {
 		client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{})
 		log.Println("Bucket created successfully")

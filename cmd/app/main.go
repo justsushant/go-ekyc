@@ -19,15 +19,14 @@ func main() {
 	// get psql store
 	psqlStore := service.NewPsqlStore(cfg.DbDsn)
 
+	// get minio store
 	minioConn := &db.MinioConn{
 		Endpoint: cfg.MinioEndpoint,
 		User:     cfg.MinioUser,
 		Password: cfg.MinioPassword,
 		Ssl:      cfg.MinioSSL,
 	}
-
-	// get new minio storage
-	minioStorage := db.NewMinioClient(minioConn)
+	minioStore := service.NewMinioStore(minioConn, cfg.MinioBucket)
 
 	// craft the server address using env vars
 	host := cfg.Host
@@ -35,6 +34,6 @@ func main() {
 	addr := host + ":" + port
 
 	// init and start the server
-	server := server.NewServer(addr, psqlStore, minioStorage)
+	server := server.NewServer(addr, psqlStore, minioStore)
 	server.Run()
 }
