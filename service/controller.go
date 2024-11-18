@@ -83,6 +83,13 @@ func (c Service) SaveFile(fileHeader *multipart.FileHeader, uploadMetaData *type
 	return nil
 }
 
+func (c Service) ValidateImage(payload types.FaceMatchPayload) error {
+	return nil
+}
+func (c Service) CalcFaceMatchScore(payload types.FaceMatchPayload) (int, error) {
+	return 0, nil
+}
+
 func validateFileType(fileType string) error {
 	switch fileType {
 	case types.FaceType, types.IdCardType:

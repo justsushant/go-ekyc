@@ -53,6 +53,22 @@ func (m mockService) SaveFile(fileHeader *multipart.FileHeader, uploadMetaData *
 	return nil
 }
 
+func (m mockService) ValidateImage(payload types.FaceMatchPayload) error {
+	if payload.ImageID1 == "exec" {
+		return service.ErrInvalidImgId
+	}
+
+	if payload.ImageID2 == "qwerty" {
+		return service.ErrNotFaceImg
+	}
+
+	return nil
+}
+
+func (m mockService) CalcFaceMatchScore(payload types.FaceMatchPayload) (int, error) {
+	return 72, nil
+}
+
 func TestSignupHandler(t *testing.T) {
 	tt := []struct {
 		name          string
@@ -166,7 +182,6 @@ func TestFileUploadHandler(t *testing.T) {
 			var buf bytes.Buffer
 
 			writer := multipart.NewWriter(&buf)
-
 			part, err := writer.CreateFormFile("file", tc.fileName)
 			if err != nil {
 				t.Fatalf("Error creating form file: %v", err)
@@ -188,6 +203,67 @@ func TestFileUploadHandler(t *testing.T) {
 			// calling the file upload handler
 			handler := NewHandler(&mockService{})
 			handler.FileUploadHandler(c)
+
+			// asserting the values
+			assert.Equal(t, tc.expStatusCode, w.Code)
+			assert.JSONEq(t, tc.expResponse, w.Body.String())
+		})
+	}
+}
+
+func TestFaceMatchHandler(t *testing.T) {
+	tt := []struct {
+		name          string
+		payload       types.FaceMatchPayload
+		expStatusCode int
+		expResponse   string
+	}{
+		{
+			name: "invalid img id case",
+			payload: types.FaceMatchPayload{
+				ImageID1: "exec",
+				ImageID2: "qwerty-valid",
+			},
+			expStatusCode: http.StatusBadRequest,
+			expResponse:   `{"errorMessage":"invalid or missing image id"}`,
+		},
+		{
+			name: "invalid img type case",
+			payload: types.FaceMatchPayload{
+				ImageID1: "exec-valid",
+				ImageID2: "qwerty",
+			},
+			expStatusCode: http.StatusBadRequest,
+			expResponse:   `{"errorMessage":"not a face image"}`,
+		},
+		{
+			name: "valid face match case",
+			payload: types.FaceMatchPayload{
+				ImageID1: "exec-valid",
+				ImageID2: "qwerty-valid",
+			},
+			expStatusCode: http.StatusOK,
+			expResponse:   `{"score":72}`,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// marhalling the payload into json
+			body, err := json.Marshal(tc.payload)
+			if err != nil {
+				t.Fatalf("Error while marshalling payload: %v", err)
+			}
+
+			// preparing the test
+			w := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(w)
+			c.Request = httptest.NewRequest("POST", "/face-match", bytes.NewBuffer([]byte(body)))
+			c.Request.Header.Set("Content-Type", "application/json")
+
+			// calling the signup handler
+			handler := NewHandler(&mockService{})
+			handler.FaceMatchHandler(c)
 
 			// asserting the values
 			assert.Equal(t, tc.expStatusCode, w.Code)

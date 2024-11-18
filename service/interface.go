@@ -13,4 +13,6 @@ type ControllerInterface interface {
 	SaveSignupData(payload types.SignupPayload, keyPair *KeyPair) error
 	ValidateFile(fileName, fileType string) error
 	SaveFile(fileHeader *multipart.FileHeader, uploadMetaData *types.UploadMetaData) error
+	ValidateImage(payload types.FaceMatchPayload) error
+	CalcFaceMatchScore(payload types.FaceMatchPayload) (int, error)
 }

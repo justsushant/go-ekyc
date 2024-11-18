@@ -81,7 +81,7 @@ func (h *Handler) FileUploadHandler(c *gin.Context) {
 	// generating UUID for file name
 	clientID, ok := c.Get("client_id")
 	if !ok {
-		// fetch clientID here using
+		// TODO: fetch clientID here using
 	}
 
 	objectName := uuid.NewString()
@@ -102,5 +102,29 @@ func (h *Handler) FileUploadHandler(c *gin.Context) {
 	// replace this with proper uuid
 	c.JSON(200, gin.H{
 		"id": objectName,
+	})
+}
+
+func (h *Handler) FaceMatchHandler(c *gin.Context) {
+	var payload types.FaceMatchPayload
+	err := json.NewDecoder(c.Request.Body).Decode(&payload)
+	if err != nil {
+		c.JSON(400, gin.H{"errorMessage": err.Error()})
+		return
+	}
+
+	if err := h.service.ValidateImage(payload); err != nil {
+		c.JSON(400, gin.H{"errorMessage": err.Error()})
+		return
+	}
+
+	score, err := h.service.CalcFaceMatchScore(payload)
+	if err != nil {
+		c.JSON(400, gin.H{"errorMessage": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"score": score,
 	})
 }

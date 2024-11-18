@@ -15,3 +15,8 @@ type UploadMetaData struct {
 	FilePath   string `json:"file_path"`
 	FileSizeKB int64  `json:"file_size_kb"`
 }
+
+type FaceMatchPayload struct {
+	ImageID1 string `json:"image1"`
+	ImageID2 string `json:"image2"`
+}
