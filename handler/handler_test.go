@@ -69,6 +69,30 @@ func (m mockService) CalcFaceMatchScore(payload types.FaceMatchPayload) (int, er
 	return 72, nil
 }
 
+func (m mockService) ValidateImageOCR(payload types.OCRPayload, clientID int) error {
+	if payload.ImageID == "exec" {
+		return service.ErrInvalidImgId
+	}
+
+	if payload.ImageID == "qwerty" {
+		return service.ErrNotIDCardImg
+	}
+
+	return nil
+}
+
+func (m mockService) PerformOCR(payload types.OCRPayload) (*types.OCRResponse, error) {
+	return &types.OCRResponse{
+		Name:      "John Adams",
+		Gender:    "Male",
+		DOB:       "1990-01-24",
+		IdNumber:  "1234-1234-1234",
+		AddrLine1: "A2, 201, Amar Villa",
+		AddrLine2: "MG Road, Pune",
+		Pincode:   "411004",
+	}, nil
+}
+
 func TestSignupHandler(t *testing.T) {
 	tt := []struct {
 		name          string
@@ -264,6 +288,73 @@ func TestFaceMatchHandler(t *testing.T) {
 			// calling the signup handler
 			handler := NewHandler(&mockService{})
 			handler.FaceMatchHandler(c)
+
+			// asserting the values
+			assert.Equal(t, tc.expStatusCode, w.Code)
+			assert.JSONEq(t, tc.expResponse, w.Body.String())
+		})
+	}
+}
+
+func TestOCRHandler(t *testing.T) {
+	tt := []struct {
+		name          string
+		payload       types.OCRPayload
+		expStatusCode int
+		expResponse   string
+	}{
+		{
+			name: "invalid img id case",
+			payload: types.OCRPayload{
+				ImageID: "exec",
+			},
+			expStatusCode: http.StatusBadRequest,
+			expResponse:   `{"errorMessage":"invalid or missing image id"}`,
+		},
+		{
+			name: "invalid img type case",
+			payload: types.OCRPayload{
+				ImageID: "qwerty",
+			},
+			expStatusCode: http.StatusBadRequest,
+			expResponse:   `{"errorMessage":"not an id card image"}`,
+		},
+		{
+			name: "valid face match case",
+			payload: types.OCRPayload{
+				ImageID: "qwerty-valid",
+			},
+			expStatusCode: http.StatusOK,
+			expResponse: `{
+				"name": "John Adams",
+				"gender": "Male",
+				"dateOfBirth": "1990-01-24",
+				"idNumber": "1234-1234-1234",
+				"addressLine1": "A2, 201, Amar Villa",
+				"addressLine2": "MG Road, Pune",
+				"pincode": "411004"
+			}`,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// marhalling the payload into json
+			body, err := json.Marshal(tc.payload)
+			if err != nil {
+				t.Fatalf("Error while marshalling payload: %v", err)
+			}
+
+			// preparing the test
+			w := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(w)
+			c.Request = httptest.NewRequest("POST", "/ocr", bytes.NewBuffer([]byte(body)))
+			c.Request.Header.Set("Content-Type", "application/json")
+			c.Set("client_id", 4)
+
+			// calling the signup handler
+			handler := NewHandler(&mockService{})
+			handler.OCRHandler(c)
 
 			// asserting the values
 			assert.Equal(t, tc.expStatusCode, w.Code)

@@ -20,3 +20,17 @@ type FaceMatchPayload struct {
 	ImageID1 string `json:"image1"`
 	ImageID2 string `json:"image2"`
 }
+
+type OCRPayload struct {
+	ImageID string `json:"image"`
+}
+
+type OCRResponse struct {
+	Name      string `json:"name"`
+	Gender    string `json:"gender"`
+	DOB       string `json:"dateOfBirth"`
+	IdNumber  string `json:"idNumber"`
+	AddrLine1 string `json:"addressLine1"`
+	AddrLine2 string `json:"addressLine2"`
+	Pincode   string `json:"pincode"`
+}

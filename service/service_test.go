@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"reflect"
 	"testing"
 
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
@@ -53,6 +54,20 @@ func (m *mockDataStore) GetMetaDataByUUID(imgUuid string) (*types.UploadMetaData
 	if imgUuid == "jnk" {
 		return &types.UploadMetaData{}, nil
 	}
+	if imgUuid == "cvbas" {
+		return &types.UploadMetaData{
+			Type:     "not-id_card",
+			ClientID: 2,
+			FilePath: imgUuid,
+		}, nil
+	}
+	if imgUuid == "cvbasrt" {
+		return &types.UploadMetaData{
+			Type:     "id_card",
+			ClientID: 3,
+			FilePath: imgUuid,
+		}, nil
+	}
 
 	return nil, nil
 }
@@ -61,6 +76,20 @@ type mockFaceMatch struct{}
 
 func (mfm *mockFaceMatch) CalcFaceMatchScore(payload types.FaceMatchPayload) (int, error) {
 	return 45, nil
+}
+
+type mockOCR struct{}
+
+func (mfm *mockOCR) PerformOCR(payload types.OCRPayload) (*types.OCRResponse, error) {
+	return &types.OCRResponse{
+		Name:      "John Adams",
+		Gender:    "Male",
+		DOB:       "1990-01-24",
+		IdNumber:  "1234-1234-1234",
+		AddrLine1: "A2, 201, Amar Villa",
+		AddrLine2: "MG Road, Pune",
+		Pincode:   "411004",
+	}, nil
 }
 
 func TestValidateImage(t *testing.T) {
@@ -166,6 +195,105 @@ func TestCalcFaceMatchScore(t *testing.T) {
 
 			if score != tc.expOut {
 				t.Errorf("Expected %q but got %q", tc.expOut, score)
+			}
+		})
+	}
+}
+func TestValidateImageOCR(t *testing.T) {
+	tt := []struct {
+		name     string
+		payload  types.OCRPayload
+		clientID int
+		expErr   error
+	}{
+		{
+			name: "not an id_card image for image id",
+			payload: types.OCRPayload{
+				ImageID: "cvbas",
+			},
+			clientID: 2,
+			expErr:   ErrNotIDCardImg,
+		},
+		{
+			name: "non-existent image for first image id",
+			payload: types.OCRPayload{
+				ImageID: "ert",
+			},
+			clientID: 2,
+			expErr:   ErrInvalidImgId,
+		},
+		{
+			name: "different client id for both images",
+			payload: types.OCRPayload{
+				ImageID: "cvbasrt",
+			},
+			clientID: 4,
+			expErr:   ErrInvalidImgId,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			service := &Service{
+				dataStore: &mockDataStore{},
+			}
+
+			err := service.ValidateImageOCR(tc.payload, tc.clientID)
+			if err != tc.expErr {
+				t.Errorf("Expected %q but got %q", tc.expErr, err)
+			}
+		})
+	}
+}
+
+func TestPerformOCR(t *testing.T) {
+	tt := []struct {
+		name    string
+		payload types.OCRPayload
+		expOut  *types.OCRResponse
+		expErr  error
+	}{
+		{
+			name: "only case",
+			payload: types.OCRPayload{
+				ImageID: "ac",
+			},
+			expOut: &types.OCRResponse{
+				Name:      "John Adams",
+				Gender:    "Male",
+				DOB:       "1990-01-24",
+				IdNumber:  "1234-1234-1234",
+				AddrLine1: "A2, 201, Amar Villa",
+				AddrLine2: "MG Road, Pune",
+				Pincode:   "411004",
+			},
+			expErr: nil,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			service := &Service{
+				dataStore:  &mockDataStore{},
+				ocrService: &mockOCR{},
+			}
+
+			resp, err := service.PerformOCR(tc.payload)
+			if tc.expErr != nil {
+				if err == nil {
+					t.Fatalf("Expected error but got nil")
+				}
+
+				if !errors.Is(tc.expErr, err) {
+					t.Errorf("Expected error %q but got %q", tc.expErr, err)
+				}
+			}
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			if !reflect.DeepEqual(resp, tc.expOut) {
+				t.Errorf("Expected %q but got %q", tc.expOut, resp)
 			}
 		})
 	}

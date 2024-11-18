@@ -14,14 +14,16 @@ type Service struct {
 	fileStore  store.FileStore
 	keyService KeyGenerator
 	faceMatch  FaceMatcher
+	ocrService OCRPerformer
 }
 
-func NewService(dataStore store.DataStore, fileStore store.FileStore, keyService KeyGenerator, faceMatch FaceMatcher) Service {
+func NewService(dataStore store.DataStore, fileStore store.FileStore, keyService KeyGenerator, faceMatch FaceMatcher, ocrService OCRPerformer) Service {
 	return Service{
 		dataStore:  dataStore,
 		keyService: keyService,
 		fileStore:  fileStore,
 		faceMatch:  faceMatch,
+		ocrService: ocrService,
 	}
 }
 
@@ -116,6 +118,35 @@ func (c Service) ValidateImage(payload types.FaceMatchPayload) error {
 
 func (c Service) CalcFaceMatchScore(payload types.FaceMatchPayload) (int, error) {
 	return c.faceMatch.CalcFaceMatchScore(payload)
+}
+
+func (c Service) PerformOCR(payload types.OCRPayload) (*types.OCRResponse, error) {
+	return c.ocrService.PerformOCR(payload)
+}
+
+func (c Service) ValidateImageOCR(payload types.OCRPayload, clientID int) error {
+	// fetching meta data of image by uuid
+	imgData, err := c.dataStore.GetMetaDataByUUID(payload.ImageID)
+	if err != nil {
+		return err
+	}
+
+	// if image data is nil (for nonexistent uuid case)
+	if imgData == nil {
+		return ErrInvalidImgId
+	}
+
+	// if image belong to different clients
+	if imgData.ClientID != clientID {
+		return ErrInvalidImgId
+	}
+
+	// if image is not of id card
+	if imgData.Type != types.IdCardType {
+		return ErrNotIDCardImg
+	}
+
+	return nil
 }
 
 func validateFileType(fileType string) error {

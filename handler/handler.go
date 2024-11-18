@@ -26,6 +26,7 @@ func (h *Handler) RegisterRoutes(router *gin.RouterGroup) {
 func (h *Handler) RegisterProtectedRoutes(router *gin.RouterGroup) {
 	router.POST("/upload", h.FileUploadHandler)
 	router.POST("/face-match", h.FaceMatchHandler)
+	router.POST("/ocr", h.OCRHandler)
 }
 
 func (h *Handler) SignupHandler(c *gin.Context) {
@@ -128,4 +129,32 @@ func (h *Handler) FaceMatchHandler(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"score": score,
 	})
+}
+
+func (h *Handler) OCRHandler(c *gin.Context) {
+	var payload types.OCRPayload
+	err := json.NewDecoder(c.Request.Body).Decode(&payload)
+	if err != nil {
+		c.JSON(400, gin.H{"errorMessage": err.Error()})
+		return
+	}
+
+	// generating UUID for file name
+	clientID, ok := c.Get("client_id")
+	if !ok {
+		// TODO: fetch clientID here using
+	}
+
+	if err := h.service.ValidateImageOCR(payload, clientID.(int)); err != nil {
+		c.JSON(400, gin.H{"errorMessage": err.Error()})
+		return
+	}
+
+	resp, err := h.service.PerformOCR(payload)
+	if err != nil {
+		c.JSON(400, gin.H{"errorMessage": err.Error()})
+		return
+	}
+
+	c.JSON(200, resp)
 }

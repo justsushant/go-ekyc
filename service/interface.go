@@ -15,4 +15,6 @@ type ControllerInterface interface {
 	SaveFile(fileHeader *multipart.FileHeader, uploadMetaData *types.UploadMetaData) error
 	ValidateImage(payload types.FaceMatchPayload) error
 	CalcFaceMatchScore(payload types.FaceMatchPayload) (int, error)
+	ValidateImageOCR(payload types.OCRPayload, clientID int) error
+	PerformOCR(payload types.OCRPayload) (*types.OCRResponse, error)
 }

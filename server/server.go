@@ -41,8 +41,9 @@ func (s *Server) Run() {
 
 	keyService := service.NewKeyService()
 	dummyFaceMatch := &service.DummyFaceMatchService{}
+	dummyOcr := &service.DummyOcrService{}
 
-	service := service.NewService(s.db, s.minio, keyService, dummyFaceMatch)
+	service := service.NewService(s.db, s.minio, keyService, dummyFaceMatch, dummyOcr)
 	handler := handler.NewHandler(service)
 	handler.RegisterRoutes(unprotectedRouter)
 	handler.RegisterProtectedRoutes(protectedRouter)
