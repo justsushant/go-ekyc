@@ -2,6 +2,8 @@ package handler
 
 import (
 	"encoding/json"
+	"path/filepath"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -83,14 +85,14 @@ func (h *Handler) FileUploadHandler(c *gin.Context) {
 	// generating UUID for file name
 	clientID, ok := c.Get("client_id")
 	if !ok {
-		// TODO: fetch clientID here using
+		// TODO: what to do when ok is false, or clientID is nil
 	}
 
 	objectName := uuid.NewString()
 	uploadMetaData := &types.UploadMetaData{
 		Type:       fileType,
 		ClientID:   clientID.(int),
-		FilePath:   objectName,
+		FilePath:   strconv.Itoa(clientID.(int)) + "/" + objectName + filepath.Ext(fileHeader.Filename), // filepath is saved like, clientID/uuid.extension
 		FileSizeKB: fileHeader.Size,
 	}
 
