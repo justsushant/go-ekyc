@@ -82,7 +82,7 @@ func (h *Handler) FileUploadHandler(c *gin.Context) {
 		return
 	}
 
-	// generating UUID for file name
+	// fetching client_id from request scoped variables
 	clientID, ok := c.Get("client_id")
 	if !ok {
 		// TODO: what to do when ok is false, or clientID is nil
@@ -122,7 +122,13 @@ func (h *Handler) FaceMatchHandler(c *gin.Context) {
 		return
 	}
 
-	score, err := h.service.CalcFaceMatchScore(payload)
+	// fetching client_id from request scoped variables
+	clientID, ok := c.Get("client_id")
+	if !ok {
+		// TODO: what to do when ok is false, or clientID is nil
+	}
+
+	score, err := h.service.CalcAndSaveFaceMatchScore(payload, clientID.(int))
 	if err != nil {
 		c.JSON(400, gin.H{"errorMessage": err.Error()})
 		return
@@ -152,7 +158,7 @@ func (h *Handler) OCRHandler(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.service.PerformOCR(payload)
+	resp, err := h.service.PerformAndSaveOCR(payload, clientID.(int))
 	if err != nil {
 		c.JSON(400, gin.H{"errorMessage": err.Error()})
 		return

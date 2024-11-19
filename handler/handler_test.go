@@ -54,34 +54,34 @@ func (m mockService) SaveFile(fileHeader *multipart.FileHeader, uploadMetaData *
 }
 
 func (m mockService) ValidateImage(payload types.FaceMatchPayload) error {
-	if payload.ImageID1 == "exec" {
+	if payload.Image1 == "exec" {
 		return service.ErrInvalidImgId
 	}
 
-	if payload.ImageID2 == "qwerty" {
+	if payload.Image2 == "qwerty" {
 		return service.ErrNotFaceImg
 	}
 
 	return nil
 }
 
-func (m mockService) CalcFaceMatchScore(payload types.FaceMatchPayload) (int, error) {
+func (m mockService) CalcAndSaveFaceMatchScore(payload types.FaceMatchPayload, clientID int) (int, error) {
 	return 72, nil
 }
 
 func (m mockService) ValidateImageOCR(payload types.OCRPayload, clientID int) error {
-	if payload.ImageID == "exec" {
+	if payload.Image == "invalid-img" {
 		return service.ErrInvalidImgId
 	}
 
-	if payload.ImageID == "qwerty" {
+	if payload.Image == "not-id-card" {
 		return service.ErrNotIDCardImg
 	}
 
 	return nil
 }
 
-func (m mockService) PerformOCR(payload types.OCRPayload) (*types.OCRResponse, error) {
+func (m mockService) PerformAndSaveOCR(payload types.OCRPayload, clientID int) (*types.OCRResponse, error) {
 	return &types.OCRResponse{
 		Name:      "John Adams",
 		Gender:    "Male",
@@ -245,8 +245,8 @@ func TestFaceMatchHandler(t *testing.T) {
 		{
 			name: "invalid img id case",
 			payload: types.FaceMatchPayload{
-				ImageID1: "exec",
-				ImageID2: "qwerty-valid",
+				Image1: "exec",
+				Image2: "qwerty-valid",
 			},
 			expStatusCode: http.StatusBadRequest,
 			expResponse:   `{"errorMessage":"invalid or missing image id"}`,
@@ -254,8 +254,8 @@ func TestFaceMatchHandler(t *testing.T) {
 		{
 			name: "invalid img type case",
 			payload: types.FaceMatchPayload{
-				ImageID1: "exec-valid",
-				ImageID2: "qwerty",
+				Image1: "exec-valid",
+				Image2: "qwerty",
 			},
 			expStatusCode: http.StatusBadRequest,
 			expResponse:   `{"errorMessage":"not a face image"}`,
@@ -263,8 +263,8 @@ func TestFaceMatchHandler(t *testing.T) {
 		{
 			name: "valid face match case",
 			payload: types.FaceMatchPayload{
-				ImageID1: "exec-valid",
-				ImageID2: "qwerty-valid",
+				Image1: "exec-valid",
+				Image2: "qwerty-valid",
 			},
 			expStatusCode: http.StatusOK,
 			expResponse:   `{"score":72}`,
@@ -284,6 +284,7 @@ func TestFaceMatchHandler(t *testing.T) {
 			c, _ := gin.CreateTestContext(w)
 			c.Request = httptest.NewRequest("POST", "/face-match", bytes.NewBuffer([]byte(body)))
 			c.Request.Header.Set("Content-Type", "application/json")
+			c.Set("client_id", 4)
 
 			// calling the signup handler
 			handler := NewHandler(&mockService{})
@@ -306,7 +307,7 @@ func TestOCRHandler(t *testing.T) {
 		{
 			name: "invalid img id case",
 			payload: types.OCRPayload{
-				ImageID: "exec",
+				Image: "invalid-img",
 			},
 			expStatusCode: http.StatusBadRequest,
 			expResponse:   `{"errorMessage":"invalid or missing image id"}`,
@@ -314,7 +315,7 @@ func TestOCRHandler(t *testing.T) {
 		{
 			name: "invalid img type case",
 			payload: types.OCRPayload{
-				ImageID: "qwerty",
+				Image: "not-id-card",
 			},
 			expStatusCode: http.StatusBadRequest,
 			expResponse:   `{"errorMessage":"not an id card image"}`,
@@ -322,7 +323,7 @@ func TestOCRHandler(t *testing.T) {
 		{
 			name: "valid face match case",
 			payload: types.OCRPayload{
-				ImageID: "qwerty-valid",
+				Image: "ac",
 			},
 			expStatusCode: http.StatusOK,
 			expResponse: `{

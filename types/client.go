@@ -1,5 +1,10 @@
 package types
 
+import (
+	"encoding/json"
+	"log"
+)
+
 type ClientData struct {
 	Id            int    `json:"id"`
 	Name          string `json:"name"`
@@ -10,6 +15,7 @@ type ClientData struct {
 }
 
 type UploadMetaData struct {
+	Id         int    `json:"id"`
 	Type       string `json:"type"`
 	ClientID   int    `json:"client_id"`
 	FilePath   string `json:"file_path"`
@@ -17,12 +23,25 @@ type UploadMetaData struct {
 }
 
 type FaceMatchPayload struct {
-	ImageID1 string `json:"image1"`
-	ImageID2 string `json:"image2"`
+	Image1 string `json:"image1"`
+	Image2 string `json:"image2"`
+}
+
+type FaceMatchData struct {
+	ClientID int `json:"client_id"`
+	ImageID1 int `json:"upload_id1"`
+	ImageID2 int `json:"upload_id2"`
+	Score    int `json:"score"`
 }
 
 type OCRPayload struct {
-	ImageID string `json:"image"`
+	Image string `json:"image"`
+}
+
+type OCRData struct {
+	ClientID int    `json:"client_id"`
+	ImageID  int    `json:"upload_id"`
+	Data     string `json:"details"`
 }
 
 type OCRResponse struct {
@@ -33,4 +52,19 @@ type OCRResponse struct {
 	AddrLine1 string `json:"addressLine1"`
 	AddrLine2 string `json:"addressLine2"`
 	Pincode   string `json:"pincode"`
+}
+
+func (or *OCRResponse) String() string {
+	jsonData, err := json.Marshal(or)
+	if err != nil {
+		log.Fatal("Error while marshalling ocr response: ", err)
+	}
+
+	return string(jsonData)
+}
+
+type OCRResult struct {
+	ImageID  string      `json:"image"`
+	ClientID int         `json:"client_id"`
+	Data     OCRResponse `json:"details"`
 }

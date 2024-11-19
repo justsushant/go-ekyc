@@ -26,6 +26,7 @@ func (s PsqlStore) InsertClientData(planId int, payload types.SignupPayload, acc
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -35,6 +36,7 @@ func (s PsqlStore) GetPlanIdFromName(planName string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
+
 	return planId, nil
 }
 
@@ -54,6 +56,7 @@ func (s PsqlStore) GetClientFromAccessKey(accessKey string) (*types.ClientData, 
 	if err != nil {
 		return nil, err
 	}
+
 	return &clientData, nil
 }
 
@@ -72,9 +75,10 @@ func (s PsqlStore) InsertUploadMetaData(uploadMetaData *types.UploadMetaData) er
 func (s PsqlStore) GetMetaDataByUUID(imgUuid string) (*types.UploadMetaData, error) {
 	var uploadData types.UploadMetaData
 	err := s.db.QueryRow(
-		"SELECT type, client_id, file_path, file_size_kb FROM upload WHERE file_path = $1",
+		"SELECT id, type, client_id, file_path, file_size_kb FROM upload WHERE file_path LIKE '%' || $1 || '%'",
 		imgUuid,
 	).Scan(
+		&uploadData.Id,
 		&uploadData.Type,
 		&uploadData.ClientID,
 		&uploadData.FilePath,
@@ -83,5 +87,30 @@ func (s PsqlStore) GetMetaDataByUUID(imgUuid string) (*types.UploadMetaData, err
 	if err != nil {
 		return nil, err
 	}
+
 	return &uploadData, nil
+}
+
+func (s PsqlStore) InsertFaceMatchResult(result *types.FaceMatchData) error {
+	_, err := s.db.Exec(
+		"INSERT INTO face_match (client_id, upload_id1, upload_id2, match_score) VALUES ($1, $2, $3, $4)",
+		result.ClientID, result.ImageID1, result.ImageID2, result.Score,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s PsqlStore) InsertOCRResult(result *types.OCRData) error {
+	_, err := s.db.Exec(
+		"INSERT INTO ocr (client_id, upload_id, details) VALUES ($1, $2, $3)",
+		result.ClientID, result.ImageID, result.Data,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -61,7 +61,7 @@ func (m *mockDataStore) GetMetaDataByUUID(imgUuid string) (*types.UploadMetaData
 			FilePath: imgUuid,
 		}, nil
 	}
-	if imgUuid == "cvbasrt" {
+	if imgUuid == "cvbasrt" || imgUuid == "ac" {
 		return &types.UploadMetaData{
 			Type:     "id_card",
 			ClientID: 3,
@@ -70,6 +70,13 @@ func (m *mockDataStore) GetMetaDataByUUID(imgUuid string) (*types.UploadMetaData
 	}
 
 	return nil, nil
+}
+
+func (m *mockDataStore) InsertFaceMatchResult(result *types.FaceMatchData) error {
+	return nil
+}
+func (m *mockDataStore) InsertOCRResult(result *types.OCRData) error {
+	return nil
 }
 
 type mockFaceMatch struct{}
@@ -101,40 +108,40 @@ func TestValidateImage(t *testing.T) {
 		{
 			name: "not a face image for first image id",
 			payload: types.FaceMatchPayload{
-				ImageID1: "abc",
-				ImageID2: "xyz",
+				Image1: "abc",
+				Image2: "xyz",
 			},
 			expErr: ErrNotFaceImg,
 		},
 		{
 			name: "not a face image for second image id",
 			payload: types.FaceMatchPayload{
-				ImageID1: "def",
-				ImageID2: "pqr",
+				Image1: "def",
+				Image2: "pqr",
 			},
 			expErr: ErrNotFaceImg,
 		},
 		{
 			name: "non-existent image for first image id",
 			payload: types.FaceMatchPayload{
-				ImageID1: "ert",
-				ImageID2: "pqr",
+				Image1: "ert",
+				Image2: "pqr",
 			},
 			expErr: ErrInvalidImgId,
 		},
 		{
 			name: "non-existent image for second image id",
 			payload: types.FaceMatchPayload{
-				ImageID1: "def",
-				ImageID2: "jnk",
+				Image1: "def",
+				Image2: "jnk",
 			},
 			expErr: ErrInvalidImgId,
 		},
 		{
 			name: "different client id for both images",
 			payload: types.FaceMatchPayload{
-				ImageID1: "xyz",
-				ImageID2: "def",
+				Image1: "xyz",
+				Image2: "def",
 			},
 			expErr: ErrInvalidImgId,
 		},
@@ -164,8 +171,8 @@ func TestCalcFaceMatchScore(t *testing.T) {
 		{
 			name: "only case",
 			payload: types.FaceMatchPayload{
-				ImageID1: "abc",
-				ImageID2: "xyz",
+				Image1: "abc",
+				Image2: "xyz",
 			},
 			expOut: 45,
 			expErr: nil,
@@ -178,8 +185,8 @@ func TestCalcFaceMatchScore(t *testing.T) {
 				dataStore: &mockDataStore{},
 				faceMatch: &mockFaceMatch{},
 			}
-
-			score, err := service.CalcFaceMatchScore(tc.payload)
+			clientID := 1
+			score, err := service.CalcAndSaveFaceMatchScore(tc.payload, clientID)
 			if tc.expErr != nil {
 				if err == nil {
 					t.Fatalf("Expected error but got nil")
@@ -209,7 +216,7 @@ func TestValidateImageOCR(t *testing.T) {
 		{
 			name: "not an id_card image for image id",
 			payload: types.OCRPayload{
-				ImageID: "cvbas",
+				Image: "cvbas",
 			},
 			clientID: 2,
 			expErr:   ErrNotIDCardImg,
@@ -217,7 +224,7 @@ func TestValidateImageOCR(t *testing.T) {
 		{
 			name: "non-existent image for first image id",
 			payload: types.OCRPayload{
-				ImageID: "ert",
+				Image: "ert",
 			},
 			clientID: 2,
 			expErr:   ErrInvalidImgId,
@@ -225,7 +232,7 @@ func TestValidateImageOCR(t *testing.T) {
 		{
 			name: "different client id for both images",
 			payload: types.OCRPayload{
-				ImageID: "cvbasrt",
+				Image: "cvbasrt",
 			},
 			clientID: 4,
 			expErr:   ErrInvalidImgId,
@@ -256,7 +263,7 @@ func TestPerformOCR(t *testing.T) {
 		{
 			name: "only case",
 			payload: types.OCRPayload{
-				ImageID: "ac",
+				Image: "ac",
 			},
 			expOut: &types.OCRResponse{
 				Name:      "John Adams",
@@ -278,7 +285,8 @@ func TestPerformOCR(t *testing.T) {
 				ocrService: &mockOCR{},
 			}
 
-			resp, err := service.PerformOCR(tc.payload)
+			clientID := 1
+			resp, err := service.PerformAndSaveOCR(tc.payload, clientID)
 			if tc.expErr != nil {
 				if err == nil {
 					t.Fatalf("Expected error but got nil")

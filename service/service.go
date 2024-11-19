@@ -89,11 +89,11 @@ func (c Service) SaveFile(fileHeader *multipart.FileHeader, uploadMetaData *type
 
 func (c Service) ValidateImage(payload types.FaceMatchPayload) error {
 	// fetching meta data of images by uuid
-	imgData1, err := c.dataStore.GetMetaDataByUUID(payload.ImageID1)
+	imgData1, err := c.dataStore.GetMetaDataByUUID(payload.Image1)
 	if err != nil {
 		return err
 	}
-	imgData2, err := c.dataStore.GetMetaDataByUUID(payload.ImageID2)
+	imgData2, err := c.dataStore.GetMetaDataByUUID(payload.Image2)
 	if err != nil {
 		return err
 	}
@@ -116,17 +116,65 @@ func (c Service) ValidateImage(payload types.FaceMatchPayload) error {
 	return nil
 }
 
-func (c Service) CalcFaceMatchScore(payload types.FaceMatchPayload) (int, error) {
-	return c.faceMatch.CalcFaceMatchScore(payload)
+func (c Service) CalcAndSaveFaceMatchScore(payload types.FaceMatchPayload, clientID int) (int, error) {
+	score, err := c.faceMatch.CalcFaceMatchScore(payload)
+	if err != nil {
+		return 0, err
+	}
+
+	// fetching meta data of images by uuid
+	imgData1, err := c.dataStore.GetMetaDataByUUID(payload.Image1)
+	if err != nil {
+		return 0, err
+	}
+	imgData2, err := c.dataStore.GetMetaDataByUUID(payload.Image2)
+	if err != nil {
+		return 0, err
+	}
+
+	result := &types.FaceMatchData{
+		ClientID: clientID,
+		ImageID1: imgData1.Id,
+		ImageID2: imgData2.Id,
+		Score:    score,
+	}
+
+	err = c.dataStore.InsertFaceMatchResult(result)
+	if err != nil {
+		return 0, err
+	}
+
+	return score, nil
 }
 
-func (c Service) PerformOCR(payload types.OCRPayload) (*types.OCRResponse, error) {
-	return c.ocrService.PerformOCR(payload)
+func (c Service) PerformAndSaveOCR(payload types.OCRPayload, clientID int) (*types.OCRResponse, error) {
+	data, err := c.ocrService.PerformOCR(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	imgData, err := c.dataStore.GetMetaDataByUUID(payload.Image)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &types.OCRData{
+		ImageID:  imgData.Id,
+		ClientID: clientID,
+		Data:     data.String(),
+	}
+
+	err = c.dataStore.InsertOCRResult(result)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }
 
 func (c Service) ValidateImageOCR(payload types.OCRPayload, clientID int) error {
 	// fetching meta data of image by uuid
-	imgData, err := c.dataStore.GetMetaDataByUUID(payload.ImageID)
+	imgData, err := c.dataStore.GetMetaDataByUUID(payload.Image)
 	if err != nil {
 		return err
 	}
