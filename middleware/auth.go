@@ -33,14 +33,16 @@ func (am *AuthMiddleware) Middleware() gin.HandlerFunc {
 			c.JSON(500, gin.H{"errorMessage": err.Error()})
 			return
 		}
+		if clientData == nil {
+			c.JSON(401, gin.H{"errorMessage": "invalid access or secret key"})
+			return
+		}
 
 		// match the hash of the key
 		err = bcrypt.CompareHashAndPassword([]byte(clientData.SecretKeyHash), []byte(secretKey))
 		if err != nil {
-			if err != nil {
-				c.JSON(401, gin.H{"errorMessage": "invalid access or secret key"})
-				return
-			}
+			c.JSON(401, gin.H{"errorMessage": "invalid access or secret key"})
+			return
 		}
 
 		// set the client id on gin.Context
