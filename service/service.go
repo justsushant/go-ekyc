@@ -74,11 +74,13 @@ func (c Service) ValidateFile(fileName, fileType string) error {
 }
 
 func (c Service) SaveFile(fileHeader *multipart.FileHeader, uploadMetaData *types.UploadMetaData) error {
+	// save the file to filestore
 	err := c.fileStore.SaveFileToBucket(fileHeader, uploadMetaData.FilePath)
 	if err != nil {
 		return err
 	}
 
+	// save the file upload metadata to db
 	err = c.dataStore.InsertUploadMetaData(uploadMetaData)
 	if err != nil {
 		return err
@@ -87,7 +89,7 @@ func (c Service) SaveFile(fileHeader *multipart.FileHeader, uploadMetaData *type
 	return nil
 }
 
-func (c Service) ValidateImage(payload types.FaceMatchPayload) error {
+func (c Service) ValidateImage(payload types.FaceMatchPayload, clientID int) error {
 	// fetching meta data of images by uuid
 	imgData1, err := c.dataStore.GetMetaDataByUUID(payload.Image1)
 	if err != nil {
@@ -105,6 +107,11 @@ func (c Service) ValidateImage(payload types.FaceMatchPayload) error {
 
 	// if image belong to different clients
 	if imgData1.ClientID != imgData2.ClientID {
+		return ErrInvalidImgId
+	}
+
+	// if client and image have different client id
+	if imgData1.ClientID != clientID {
 		return ErrInvalidImgId
 	}
 

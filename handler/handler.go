@@ -117,15 +117,15 @@ func (h *Handler) FaceMatchHandler(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.ValidateImage(payload); err != nil {
-		c.JSON(400, gin.H{"errorMessage": err.Error()})
-		return
-	}
-
 	// fetching client_id from request scoped variables
 	clientID, ok := c.Get("client_id")
 	if !ok {
 		// TODO: what to do when ok is false, or clientID is nil
+	}
+
+	if err := h.service.ValidateImage(payload, clientID.(int)); err != nil {
+		c.JSON(400, gin.H{"errorMessage": err.Error()})
+		return
 	}
 
 	score, err := h.service.CalcAndSaveFaceMatchScore(payload, clientID.(int))

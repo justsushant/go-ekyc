@@ -53,7 +53,7 @@ func (m mockService) SaveFile(fileHeader *multipart.FileHeader, uploadMetaData *
 	return nil
 }
 
-func (m mockService) ValidateImage(payload types.FaceMatchPayload) error {
+func (m mockService) ValidateImage(payload types.FaceMatchPayload, clientID int) error {
 	if payload.Image1 == "exec" {
 		return service.ErrInvalidImgId
 	}

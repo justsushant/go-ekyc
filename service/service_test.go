@@ -68,6 +68,13 @@ func (m *mockDataStore) GetMetaDataByUUID(imgUuid string) (*types.UploadMetaData
 			FilePath: imgUuid,
 		}, nil
 	}
+	if imgUuid == "asdf" || imgUuid == "lkjh" {
+		return &types.UploadMetaData{
+			Type:     "face",
+			ClientID: 3,
+			FilePath: imgUuid,
+		}, nil
+	}
 
 	return nil, nil
 }
@@ -101,9 +108,10 @@ func (mfm *mockOCR) PerformOCR(payload types.OCRPayload) (*types.OCRResponse, er
 
 func TestValidateImage(t *testing.T) {
 	tt := []struct {
-		name    string
-		payload types.FaceMatchPayload
-		expErr  error
+		name     string
+		payload  types.FaceMatchPayload
+		clientID int
+		expErr   error
 	}{
 		{
 			name: "not a face image for first image id",
@@ -111,7 +119,8 @@ func TestValidateImage(t *testing.T) {
 				Image1: "abc",
 				Image2: "xyz",
 			},
-			expErr: ErrNotFaceImg,
+			clientID: 1,
+			expErr:   ErrNotFaceImg,
 		},
 		{
 			name: "not a face image for second image id",
@@ -119,7 +128,8 @@ func TestValidateImage(t *testing.T) {
 				Image1: "def",
 				Image2: "pqr",
 			},
-			expErr: ErrNotFaceImg,
+			clientID: 2,
+			expErr:   ErrNotFaceImg,
 		},
 		{
 			name: "non-existent image for first image id",
@@ -127,7 +137,8 @@ func TestValidateImage(t *testing.T) {
 				Image1: "ert",
 				Image2: "pqr",
 			},
-			expErr: ErrInvalidImgId,
+			clientID: 1,
+			expErr:   ErrInvalidImgId,
 		},
 		{
 			name: "non-existent image for second image id",
@@ -135,7 +146,8 @@ func TestValidateImage(t *testing.T) {
 				Image1: "def",
 				Image2: "jnk",
 			},
-			expErr: ErrInvalidImgId,
+			clientID: 1,
+			expErr:   ErrInvalidImgId,
 		},
 		{
 			name: "different client id for both images",
@@ -143,7 +155,17 @@ func TestValidateImage(t *testing.T) {
 				Image1: "xyz",
 				Image2: "def",
 			},
-			expErr: ErrInvalidImgId,
+			clientID: 1,
+			expErr:   ErrInvalidImgId,
+		},
+		{
+			name: "different client id for client and image",
+			payload: types.FaceMatchPayload{
+				Image1: "asdf",
+				Image2: "lkjh",
+			},
+			clientID: 2,
+			expErr:   ErrInvalidImgId,
 		},
 	}
 
@@ -153,7 +175,7 @@ func TestValidateImage(t *testing.T) {
 				dataStore: &mockDataStore{},
 			}
 
-			err := service.ValidateImage(tc.payload)
+			err := service.ValidateImage(tc.payload, tc.clientID)
 			if err != tc.expErr {
 				t.Errorf("Expected %q but got %q", tc.expErr, err)
 			}
@@ -230,7 +252,7 @@ func TestValidateImageOCR(t *testing.T) {
 			expErr:   ErrInvalidImgId,
 		},
 		{
-			name: "different client id for both images",
+			name: "different client id for image and client",
 			payload: types.OCRPayload{
 				Image: "cvbasrt",
 			},
