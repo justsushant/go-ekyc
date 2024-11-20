@@ -9,7 +9,8 @@ import (
 )
 
 type TaskQueue interface {
-	PushJobOnQueue(payload types.QueuePayload) error
+	PushJobOnQueue(payload types.FaceMatchQueuePayload) error
+	PushJobOnQueueOCR(payload types.OCRQueuePayload) error
 }
 
 type RabbitMqQueue struct {
@@ -46,7 +47,31 @@ func NewTaskQueue(dsn, name string) *RabbitMqQueue {
 	}
 }
 
-func (t *RabbitMqQueue) PushJobOnQueue(payload types.QueuePayload) error {
+func (t *RabbitMqQueue) PushJobOnQueue(payload types.FaceMatchQueuePayload) error {
+	jsonBytes, err := json.Marshal(payload)
+	if err != nil {
+		log.Println("Error while marshalling JSON: ", err)
+	}
+
+	err = t.ch.Publish(
+		"",
+		t.queue.Name,
+		false,
+		false,
+		amqp.Publishing{
+			DeliveryMode: amqp.Persistent,
+			ContentType:  "application/json",
+			Body:         jsonBytes,
+		},
+	)
+	if err != nil {
+		log.Println("Error while passing message to queue: ", err)
+		return err
+	}
+
+	return nil
+}
+func (t *RabbitMqQueue) PushJobOnQueueOCR(payload types.OCRQueuePayload) error {
 	jsonBytes, err := json.Marshal(payload)
 	if err != nil {
 		log.Println("Error while marshalling JSON: ", err)

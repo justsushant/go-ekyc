@@ -192,3 +192,28 @@ func (h *Handler) FaceMatchHandlerAsync(c *gin.Context) {
 		"id": id,
 	})
 }
+
+func (h *Handler) OCRHandlerAsync(c *gin.Context) {
+	var payload types.OCRPayload
+	err := json.NewDecoder(c.Request.Body).Decode(&payload)
+	if err != nil {
+		c.JSON(400, gin.H{"errorMessage": err.Error()})
+		return
+	}
+
+	// generating UUID for file name
+	clientID, ok := c.Get("client_id")
+	if !ok {
+		// TODO: fetch clientID here using
+	}
+
+	id, err := h.service.PerformOCRAsync(payload, clientID.(int))
+	if err != nil {
+		c.JSON(400, gin.H{"errorMessage": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"id": id,
+	})
+}

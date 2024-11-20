@@ -105,6 +105,17 @@ func (m mockService) PerformFaceMatchAsync(payload types.FaceMatchPayload, clien
 	return "uuid-ok", nil
 }
 
+func (m mockService) PerformOCRAsync(payload types.OCRPayload, clientID int) (string, error) {
+	if payload.Image == "invalid-img" {
+		return "", service.ErrInvalidImgId
+	}
+	if payload.Image == "not-id-card" {
+		return "", service.ErrNotIDCardImg
+	}
+
+	return "uuid-ok", nil
+}
+
 func TestSignupHandler(t *testing.T) {
 	tt := []struct {
 		name          string
@@ -430,6 +441,65 @@ func TestFaceMatchHandlerAsync(t *testing.T) {
 			// calling the signup handler
 			handler := NewHandler(&mockService{})
 			handler.FaceMatchHandlerAsync(c)
+
+			// asserting the values
+			assert.Equal(t, tc.expStatusCode, w.Code)
+			assert.JSONEq(t, tc.expResponse, w.Body.String())
+		})
+	}
+}
+
+func TestOCRHandlerAsync(t *testing.T) {
+	tt := []struct {
+		name          string
+		payload       types.OCRPayload
+		expStatusCode int
+		expResponse   string
+	}{
+		{
+			name: "invalid img id case",
+			payload: types.OCRPayload{
+				Image: "invalid-img",
+			},
+			expStatusCode: http.StatusBadRequest,
+			expResponse:   `{"errorMessage":"invalid or missing image id"}`,
+		},
+		{
+			name: "invalid img type case",
+			payload: types.OCRPayload{
+				Image: "not-id-card",
+			},
+			expStatusCode: http.StatusBadRequest,
+			expResponse:   `{"errorMessage":"not an id card image"}`,
+		},
+		{
+			name: "valid face match case",
+			payload: types.OCRPayload{
+				Image: "ac",
+			},
+			expStatusCode: http.StatusOK,
+			expResponse:   `{"id": "uuid-ok"}`,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// marhalling the payload into json
+			body, err := json.Marshal(tc.payload)
+			if err != nil {
+				t.Fatalf("Error while marshalling payload: %v", err)
+			}
+
+			// preparing the test
+			w := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(w)
+			c.Request = httptest.NewRequest("POST", "/ocr-async", bytes.NewBuffer([]byte(body)))
+			c.Request.Header.Set("Content-Type", "application/json")
+			c.Set("client_id", 4)
+
+			// calling the signup handler
+			handler := NewHandler(&mockService{})
+			handler.OCRHandlerAsync(c)
 
 			// asserting the values
 			assert.Equal(t, tc.expStatusCode, w.Code)

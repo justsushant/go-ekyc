@@ -126,3 +126,15 @@ func (s PsqlStore) InsertFaceMatchJob(id string) error {
 
 	return nil
 }
+
+func (s PsqlStore) InsertOCRJob(id string) error {
+	_, err := s.db.Exec(
+		"INSERT INTO ocr (job_id, status) VALUES ($1, 'created')",
+		id,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

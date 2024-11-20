@@ -13,4 +13,5 @@ type DataStore interface {
 	InsertFaceMatchResult(result *types.FaceMatchData) error
 	InsertOCRResult(result *types.OCRData) error
 	InsertFaceMatchJob(id string) error
+	InsertOCRJob(id string) error
 }

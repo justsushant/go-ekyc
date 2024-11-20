@@ -69,8 +69,13 @@ type OCRResult struct {
 	Data     OCRResponse `json:"details"`
 }
 
-type QueuePayload struct {
+type FaceMatchQueuePayload struct {
 	JobID  string `json:"job_id"`
 	Image1 string `json:"image1"`
 	Image2 string `json:"image2"`
+}
+
+type OCRQueuePayload struct {
+	JobID string `json:"job_id"`
+	Image string `json:"image"`
 }

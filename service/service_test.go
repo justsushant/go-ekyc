@@ -84,6 +84,7 @@ func (m *mockDataStore) GetMetaDataByUUID(imgUuid string) (*types.UploadMetaData
 func (m *mockDataStore) InsertFaceMatchResult(result *types.FaceMatchData) error { return nil }
 func (m *mockDataStore) InsertOCRResult(result *types.OCRData) error             { return nil }
 func (m *mockDataStore) InsertFaceMatchJob(id string) error                      { return nil }
+func (m *mockDataStore) InsertOCRJob(id string) error                            { return nil }
 
 type mockFaceMatch struct{}
 
@@ -113,9 +114,8 @@ func (u *mockUuid) New() string {
 
 type mockTaskQueue struct{}
 
-func (tq *mockTaskQueue) PushJobOnQueue(payload types.QueuePayload) error {
-	return nil
-}
+func (tq *mockTaskQueue) PushJobOnQueue(payload types.FaceMatchQueuePayload) error { return nil }
+func (tq *mockTaskQueue) PushJobOnQueueOCR(payload types.OCRQueuePayload) error    { return nil }
 
 func TestValidateImage(t *testing.T) {
 	tt := []struct {
@@ -410,9 +410,8 @@ func TestPerformFaceMatchAsync(t *testing.T) {
 				Image2: "lkjh",
 			},
 			clientID: 3,
-			// expOut: "uuid-ok",
-			expOut: "new-uuid",
-			expErr: nil,
+			expOut:   "new-uuid",
+			expErr:   nil,
 		},
 	}
 
@@ -426,6 +425,81 @@ func TestPerformFaceMatchAsync(t *testing.T) {
 			}
 
 			id, err := service.PerformFaceMatchAsync(tc.payload, tc.clientID)
+			if tc.expErr != nil {
+				if err == nil {
+					t.Fatalf("Expected error but got nil")
+				}
+
+				if !errors.Is(tc.expErr, err) {
+					t.Errorf("Expected error %q but got %q", tc.expErr, err)
+				}
+
+				return
+			}
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			if id != tc.expOut {
+				t.Errorf("Expected %q but got %q", tc.expOut, id)
+			}
+		})
+	}
+}
+
+func TestPerformOCRAsync(t *testing.T) {
+	tt := []struct {
+		name     string
+		payload  types.OCRPayload
+		clientID int
+		expOut   string
+		expErr   error
+	}{
+		{
+			name: "not an id_card image for image id",
+			payload: types.OCRPayload{
+				Image: "cvbas",
+			},
+			clientID: 2,
+			expErr:   ErrNotIDCardImg,
+		},
+		{
+			name: "non-existent image for first image id",
+			payload: types.OCRPayload{
+				Image: "ert",
+			},
+			clientID: 2,
+			expErr:   ErrInvalidImgId,
+		},
+		{
+			name: "different client id for image and client",
+			payload: types.OCRPayload{
+				Image: "cvbasrt",
+			},
+			clientID: 4,
+			expErr:   ErrInvalidImgId,
+		},
+		{
+			name: "only case",
+			payload: types.OCRPayload{
+				Image: "ac",
+			},
+			clientID: 3,
+			expOut:   "new-uuid",
+			expErr:   nil,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			service := &Service{
+				dataStore:  &mockDataStore{},
+				ocrService: &mockOCR{},
+				uuid:       &mockUuid{},
+				queue:      &mockTaskQueue{},
+			}
+
+			id, err := service.PerformOCRAsync(tc.payload, tc.clientID)
 			if tc.expErr != nil {
 				if err == nil {
 					t.Fatalf("Expected error but got nil")

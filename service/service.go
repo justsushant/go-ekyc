@@ -225,12 +225,38 @@ func (c Service) PerformFaceMatchAsync(payload types.FaceMatchPayload, clientID 
 	}
 
 	// push the job onto the queue
-	queuePayload := types.QueuePayload{
+	queuePayload := types.FaceMatchQueuePayload{
 		JobID:  jobID,
 		Image1: payload.Image1,
 		Image2: payload.Image2,
 	}
 	c.queue.PushJobOnQueue(queuePayload)
+
+	return jobID, nil
+}
+
+func (c Service) PerformOCRAsync(payload types.OCRPayload, clientID int) (string, error) {
+	// make validations for the images
+	err := c.validateImageForOCR(payload, clientID)
+	if err != nil {
+		return "", err
+	}
+
+	// generate the job id
+	jobID := c.uuid.New()
+
+	// mark the job started on the db
+	err = c.dataStore.InsertOCRJob(jobID)
+	if err != nil {
+		return "", err
+	}
+
+	// push the job onto the queue
+	queuePayload := types.OCRQueuePayload{
+		JobID: jobID,
+		Image: payload.Image,
+	}
+	c.queue.PushJobOnQueueOCR(queuePayload)
 
 	return jobID, nil
 }
@@ -303,6 +329,31 @@ func (c Service) validateImagesForFaceMatch(payload types.FaceMatchPayload, clie
 	}
 	if imgData2.Type != types.FaceType {
 		return ErrNotFaceImg
+	}
+
+	return nil
+}
+
+func (c Service) validateImageForOCR(payload types.OCRPayload, clientID int) error {
+	// fetching meta data of image by uuid
+	imgData, err := c.dataStore.GetMetaDataByUUID(payload.Image)
+	if err != nil {
+		return err
+	}
+
+	// if image data is nil (for nonexistent uuid case)
+	if imgData == nil {
+		return ErrInvalidImgId
+	}
+
+	// if image belong to different clients
+	if imgData.ClientID != clientID {
+		return ErrInvalidImgId
+	}
+
+	// if image is not of id card
+	if imgData.Type != types.IdCardType {
+		return ErrNotIDCardImg
 	}
 
 	return nil
