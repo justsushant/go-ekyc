@@ -23,6 +23,6 @@ func NewMinioClient(conn *MinioConn) *minio.Client {
 		log.Fatal(err)
 	}
 
-	log.Println("Minio store connected")
+	log.Println("Minio client connected")
 	return client
 }

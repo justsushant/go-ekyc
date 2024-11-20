@@ -12,7 +12,7 @@ type PsqlStore struct {
 }
 
 func NewPsqlStore(dsn string) PsqlStore {
-	psqlClient := db.NewPostgreSQLStorage(dsn)
+	psqlClient := db.NewPsqlClient(dsn)
 	return PsqlStore{
 		db: psqlClient,
 	}

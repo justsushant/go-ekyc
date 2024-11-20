@@ -17,6 +17,7 @@ type Config struct {
 	MinioEndpoint string `env:"MINIO_ENDPOINT,required"`
 	MinioSSL      bool   `env:"MINIO_SSL,required"`
 	MinioBucket   string `env:"MINIO_BUCKET_NAME,required"`
+	RedisDsn      string `env:"REDIS_DSN,required"`
 }
 
 func InitConfig() (*Config, error) {

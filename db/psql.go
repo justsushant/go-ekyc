@@ -7,7 +7,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func NewPostgreSQLStorage(dsn string) *sql.DB {
+func NewPsqlClient(dsn string) *sql.DB {
 	// connect to database
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
@@ -20,6 +20,6 @@ func NewPostgreSQLStorage(dsn string) *sql.DB {
 		log.Fatal(err)
 	}
 
-	log.Println("PostgreSQL database connected")
+	log.Println("PostgreSQL client connected")
 	return db
 }

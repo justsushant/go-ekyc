@@ -15,13 +15,15 @@ type Server struct {
 	addr  string
 	db    store.DataStore
 	minio store.FileStore
+	redis store.CacheStore
 }
 
-func NewServer(addr string, db store.DataStore, minio store.FileStore) *Server {
+func NewServer(addr string, db store.DataStore, minio store.FileStore, redis store.CacheStore) *Server {
 	return &Server{
 		addr:  addr,
 		db:    db,
 		minio: minio,
+		redis: redis,
 	}
 }
 

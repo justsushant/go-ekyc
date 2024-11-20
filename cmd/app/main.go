@@ -28,12 +28,15 @@ func main() {
 	}
 	minioStore := service.NewMinioStore(minioConn, cfg.MinioBucket)
 
+	// get redis stores
+	redisStore := service.NewRedisStore(cfg.RedisDsn)
+
 	// craft the server address using env vars
 	host := cfg.Host
 	port := cfg.Port
 	addr := host + ":" + port
 
 	// init and start the server
-	server := server.NewServer(addr, psqlStore, minioStore)
+	server := server.NewServer(addr, psqlStore, minioStore, redisStore)
 	server.Run()
 }
