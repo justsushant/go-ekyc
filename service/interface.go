@@ -17,4 +17,5 @@ type ControllerInterface interface {
 	CalcAndSaveFaceMatchScore(payload types.FaceMatchPayload, clientID int) (int, error)
 	ValidateImageOCR(payload types.OCRPayload, clientID int) error
 	PerformAndSaveOCR(payload types.OCRPayload, clientID int) (*types.OCRResponse, error)
+	PerformFaceMatchAsync(payload types.FaceMatchPayload, clientID int) (string, error)
 }

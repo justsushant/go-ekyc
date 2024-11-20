@@ -68,3 +68,9 @@ type OCRResult struct {
 	ClientID int         `json:"client_id"`
 	Data     OCRResponse `json:"details"`
 }
+
+type QueuePayload struct {
+	JobID  string `json:"job_id"`
+	Image1 string `json:"image1"`
+	Image2 string `json:"image2"`
+}

@@ -12,4 +12,5 @@ type DataStore interface {
 	GetMetaDataByUUID(imgUuid string) (*types.UploadMetaData, error)
 	InsertFaceMatchResult(result *types.FaceMatchData) error
 	InsertOCRResult(result *types.OCRData) error
+	InsertFaceMatchJob(id string) error
 }

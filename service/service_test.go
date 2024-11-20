@@ -14,9 +14,11 @@ func (m *mockDataStore) GetPlanIdFromName(planName string) (int, error) { return
 func (m *mockDataStore) InsertClientData(planId int, payload types.SignupPayload, accessKey, secretKeyHash string) error {
 	return nil
 }
+
 func (m *mockDataStore) GetClientFromAccessKey(accessKey string) (*types.ClientData, error) {
 	return nil, nil
 }
+
 func (m *mockDataStore) InsertUploadMetaData(uploadMetaData *types.UploadMetaData) error { return nil }
 
 func (m *mockDataStore) GetMetaDataByUUID(imgUuid string) (*types.UploadMetaData, error) {
@@ -79,12 +81,9 @@ func (m *mockDataStore) GetMetaDataByUUID(imgUuid string) (*types.UploadMetaData
 	return nil, nil
 }
 
-func (m *mockDataStore) InsertFaceMatchResult(result *types.FaceMatchData) error {
-	return nil
-}
-func (m *mockDataStore) InsertOCRResult(result *types.OCRData) error {
-	return nil
-}
+func (m *mockDataStore) InsertFaceMatchResult(result *types.FaceMatchData) error { return nil }
+func (m *mockDataStore) InsertOCRResult(result *types.OCRData) error             { return nil }
+func (m *mockDataStore) InsertFaceMatchJob(id string) error                      { return nil }
 
 type mockFaceMatch struct{}
 
@@ -104,6 +103,18 @@ func (mfm *mockOCR) PerformOCR(payload types.OCRPayload) (*types.OCRResponse, er
 		AddrLine2: "MG Road, Pune",
 		Pincode:   "411004",
 	}, nil
+}
+
+type mockUuid struct{}
+
+func (u *mockUuid) New() string {
+	return "new-uuid"
+}
+
+type mockTaskQueue struct{}
+
+func (tq *mockTaskQueue) PushJobOnQueue(payload types.QueuePayload) error {
+	return nil
 }
 
 func TestValidateImage(t *testing.T) {
@@ -228,6 +239,7 @@ func TestCalcFaceMatchScore(t *testing.T) {
 		})
 	}
 }
+
 func TestValidateImageOCR(t *testing.T) {
 	tt := []struct {
 		name     string
@@ -324,6 +336,113 @@ func TestPerformOCR(t *testing.T) {
 
 			if !reflect.DeepEqual(resp, tc.expOut) {
 				t.Errorf("Expected %q but got %q", tc.expOut, resp)
+			}
+		})
+	}
+}
+
+func TestPerformFaceMatchAsync(t *testing.T) {
+	tt := []struct {
+		name     string
+		payload  types.FaceMatchPayload
+		clientID int
+		expOut   string
+		expErr   error
+	}{
+		{
+			name: "not a face image for first image id",
+			payload: types.FaceMatchPayload{
+				Image1: "abc",
+				Image2: "xyz",
+			},
+			clientID: 1,
+			expErr:   ErrNotFaceImg,
+		},
+		{
+			name: "not a face image for second image id",
+			payload: types.FaceMatchPayload{
+				Image1: "def",
+				Image2: "pqr",
+			},
+			clientID: 2,
+			expErr:   ErrNotFaceImg,
+		},
+		{
+			name: "non-existent image for first image id",
+			payload: types.FaceMatchPayload{
+				Image1: "ert",
+				Image2: "pqr",
+			},
+			clientID: 1,
+			expErr:   ErrInvalidImgId,
+		},
+		{
+			name: "non-existent image for second image id",
+			payload: types.FaceMatchPayload{
+				Image1: "def",
+				Image2: "jnk",
+			},
+			clientID: 1,
+			expErr:   ErrInvalidImgId,
+		},
+		{
+			name: "different client id for both images",
+			payload: types.FaceMatchPayload{
+				Image1: "xyz",
+				Image2: "def",
+			},
+			clientID: 1,
+			expErr:   ErrInvalidImgId,
+		},
+		{
+			name: "different client id for client and image",
+			payload: types.FaceMatchPayload{
+				Image1: "asdf",
+				Image2: "lkjh",
+			},
+			clientID: 2,
+			expErr:   ErrInvalidImgId,
+		},
+		{
+			name: "valid case",
+			payload: types.FaceMatchPayload{
+				Image1: "asdf",
+				Image2: "lkjh",
+			},
+			clientID: 3,
+			// expOut: "uuid-ok",
+			expOut: "new-uuid",
+			expErr: nil,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			service := &Service{
+				dataStore: &mockDataStore{},
+				faceMatch: &mockFaceMatch{},
+				uuid:      &mockUuid{},
+				queue:     &mockTaskQueue{},
+			}
+
+			id, err := service.PerformFaceMatchAsync(tc.payload, tc.clientID)
+			if tc.expErr != nil {
+				if err == nil {
+					t.Fatalf("Expected error but got nil")
+				}
+
+				if !errors.Is(tc.expErr, err) {
+					t.Errorf("Expected error %q but got %q", tc.expErr, err)
+				}
+
+				return
+			}
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			if id != tc.expOut {
+				t.Errorf("Expected %q but got %q", tc.expOut, id)
 			}
 		})
 	}

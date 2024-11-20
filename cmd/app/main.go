@@ -31,12 +31,15 @@ func main() {
 	// get redis stores
 	redisStore := service.NewRedisStore(cfg.RedisDsn)
 
+	// get rabbitmq client
+	rabbitMqQueue := service.NewTaskQueue(cfg.RabbitMqDsn, cfg.RabbitMqQueueName)
+
 	// craft the server address using env vars
 	host := cfg.Host
 	port := cfg.Port
 	addr := host + ":" + port
 
 	// init and start the server
-	server := server.NewServer(addr, psqlStore, minioStore, redisStore)
+	server := server.NewServer(addr, psqlStore, minioStore, redisStore, rabbitMqQueue)
 	server.Run()
 }

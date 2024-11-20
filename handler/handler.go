@@ -29,6 +29,7 @@ func (h *Handler) RegisterProtectedRoutes(router *gin.RouterGroup) {
 	router.POST("/upload", h.FileUploadHandler)
 	router.POST("/face-match", h.FaceMatchHandler)
 	router.POST("/ocr", h.OCRHandler)
+	router.POST("/face-match-async", h.FaceMatchHandlerAsync)
 }
 
 func (h *Handler) SignupHandler(c *gin.Context) {
@@ -165,4 +166,29 @@ func (h *Handler) OCRHandler(c *gin.Context) {
 	}
 
 	c.JSON(200, resp)
+}
+
+func (h *Handler) FaceMatchHandlerAsync(c *gin.Context) {
+	var payload types.FaceMatchPayload
+	err := json.NewDecoder(c.Request.Body).Decode(&payload)
+	if err != nil {
+		c.JSON(400, gin.H{"errorMessage": err.Error()})
+		return
+	}
+
+	// fetching client_id from request scoped variables
+	clientID, ok := c.Get("client_id")
+	if !ok {
+		// TODO: what to do when ok is false, or clientID is nil
+	}
+
+	id, err := h.service.PerformFaceMatchAsync(payload, clientID.(int))
+	if err != nil {
+		c.JSON(400, gin.H{"errorMessage": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"id": id,
+	})
 }

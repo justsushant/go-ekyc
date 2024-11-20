@@ -114,3 +114,15 @@ func (s PsqlStore) InsertOCRResult(result *types.OCRData) error {
 
 	return nil
 }
+
+func (s PsqlStore) InsertFaceMatchJob(id string) error {
+	_, err := s.db.Exec(
+		"INSERT INTO face_match (job_id, status) VALUES ($1, 'created')",
+		id,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
