@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type mockDataStore struct{}
@@ -83,8 +84,25 @@ func (m *mockDataStore) GetMetaDataByUUID(imgUuid string) (*types.UploadMetaData
 
 func (m *mockDataStore) InsertFaceMatchResult(result *types.FaceMatchData) error { return nil }
 func (m *mockDataStore) InsertOCRResult(result *types.OCRData) error             { return nil }
-func (m *mockDataStore) InsertFaceMatchJob(id string) error                      { return nil }
-func (m *mockDataStore) InsertOCRJob(id string) error                            { return nil }
+func (m *mockDataStore) InsertFaceMatchJobCompleted(id1, id2, clientID int, jobID string) error {
+	return nil
+}
+func (m *mockDataStore) InsertOCRJobCompleted(id1, client_id int, jobID string) error {
+	return nil
+}
+
+func (m *mockDataStore) UpdateFaceMatchJobCompleted(jobID string, score int) error {
+	return nil
+}
+
+func (m *mockDataStore) UpdateOCRJobCompleted(jobID string, data *types.OCRResponse) error {
+	return nil
+}
+
+func (m *mockDataStore) UpdateFaceMatchJobProcessed(jobID string) error      { return nil }
+func (m *mockDataStore) UpdateOCRJobProcessed(jobID string) error            { return nil }
+func (m *mockDataStore) UpdateFaceMatchJobFailed(jobID, reason string) error { return nil }
+func (m *mockDataStore) UpdateOCRJobFailed(jobID, reason string) error       { return nil }
 
 type mockFaceMatch struct{}
 
@@ -114,8 +132,8 @@ func (u *mockUuid) New() string {
 
 type mockTaskQueue struct{}
 
-func (tq *mockTaskQueue) PushJobOnQueue(payload types.FaceMatchQueuePayload) error { return nil }
-func (tq *mockTaskQueue) PushJobOnQueueOCR(payload types.OCRQueuePayload) error    { return nil }
+func (tq *mockTaskQueue) PushJobOnQueue(payload []byte) error             { return nil }
+func (tq *mockTaskQueue) PullJobFromQueue() (<-chan amqp.Delivery, error) { return nil, nil }
 
 func TestValidateImage(t *testing.T) {
 	tt := []struct {

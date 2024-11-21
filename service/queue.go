@@ -1,16 +1,14 @@
 package service
 
 import (
-	"encoding/json"
 	"log"
 
-	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type TaskQueue interface {
-	PushJobOnQueue(payload types.FaceMatchQueuePayload) error
-	PushJobOnQueueOCR(payload types.OCRQueuePayload) error
+	PushJobOnQueue(payload []byte) error
+	PullJobFromQueue() (<-chan amqp.Delivery, error)
 }
 
 type RabbitMqQueue struct {
@@ -41,19 +39,17 @@ func NewTaskQueue(dsn, name string) *RabbitMqQueue {
 		log.Fatalf("Failed to open a queue: %v", err)
 	}
 
+	log.Println("Rabitmq client connected")
+
 	return &RabbitMqQueue{
 		queue: q,
 		ch:    *ch,
 	}
 }
 
-func (t *RabbitMqQueue) PushJobOnQueue(payload types.FaceMatchQueuePayload) error {
-	jsonBytes, err := json.Marshal(payload)
-	if err != nil {
-		log.Println("Error while marshalling JSON: ", err)
-	}
-
-	err = t.ch.Publish(
+func (t *RabbitMqQueue) PushJobOnQueue(payload []byte) error {
+	log.Println(string(payload))
+	err := t.ch.Publish(
 		"",
 		t.queue.Name,
 		false,
@@ -61,7 +57,7 @@ func (t *RabbitMqQueue) PushJobOnQueue(payload types.FaceMatchQueuePayload) erro
 		amqp.Publishing{
 			DeliveryMode: amqp.Persistent,
 			ContentType:  "application/json",
-			Body:         jsonBytes,
+			Body:         payload,
 		},
 	)
 	if err != nil {
@@ -71,27 +67,30 @@ func (t *RabbitMqQueue) PushJobOnQueue(payload types.FaceMatchQueuePayload) erro
 
 	return nil
 }
-func (t *RabbitMqQueue) PushJobOnQueueOCR(payload types.OCRQueuePayload) error {
-	jsonBytes, err := json.Marshal(payload)
-	if err != nil {
-		log.Println("Error while marshalling JSON: ", err)
-	}
 
-	err = t.ch.Publish(
-		"",
-		t.queue.Name,
-		false,
-		false,
-		amqp.Publishing{
-			DeliveryMode: amqp.Persistent,
-			ContentType:  "application/json",
-			Body:         jsonBytes,
-		},
+func (t *RabbitMqQueue) PullJobFromQueue() (<-chan amqp.Delivery, error) {
+	err := t.ch.Qos(
+		1,     // prefetch count
+		0,     // prefetch size
+		false, // global
 	)
 	if err != nil {
-		log.Println("Error while passing message to queue: ", err)
-		return err
+		return nil, err
 	}
 
-	return nil
+	msgs, err := t.ch.Consume(
+		t.queue.Name, // queue
+		"",           // consumer
+		// false,        // auto-ack
+		true,  // auto-ack
+		false, // exclusive
+		false, // no-local
+		false, // no-wait
+		nil,   // args
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return msgs, nil
 }

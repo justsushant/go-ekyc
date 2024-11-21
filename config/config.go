@@ -18,8 +18,8 @@ type Config struct {
 	MinioSSL          bool   `env:"MINIO_SSL,required"`
 	MinioBucket       string `env:"MINIO_BUCKET_NAME,required"`
 	RedisDsn          string `env:"REDIS_DSN,required"`
-	RabbitMqDsn       string `env:"RABBITMQ_DSN, required"`
-	RabbitMqQueueName string `env:"RABBITMQ_QUEUE_NAME", required`
+	RabbitMqDsn       string `env:"RABBITMQ_DSN,required"`
+	RabbitMqQueueName string `env:"RABBITMQ_QUEUE_NAME,required"`
 }
 
 func InitConfig() (*Config, error) {

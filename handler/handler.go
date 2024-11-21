@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"path/filepath"
 	"strconv"
 
@@ -30,6 +31,7 @@ func (h *Handler) RegisterProtectedRoutes(router *gin.RouterGroup) {
 	router.POST("/face-match", h.FaceMatchHandler)
 	router.POST("/ocr", h.OCRHandler)
 	router.POST("/face-match-async", h.FaceMatchHandlerAsync)
+	router.POST("/ocr-async", h.OCRHandlerAsync)
 }
 
 func (h *Handler) SignupHandler(c *gin.Context) {
@@ -128,6 +130,8 @@ func (h *Handler) FaceMatchHandler(c *gin.Context) {
 		c.JSON(400, gin.H{"errorMessage": err.Error()})
 		return
 	}
+
+	log.Println("After validatio")
 
 	score, err := h.service.CalcAndSaveFaceMatchScore(payload, clientID.(int))
 	if err != nil {

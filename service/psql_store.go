@@ -115,10 +115,10 @@ func (s PsqlStore) InsertOCRResult(result *types.OCRData) error {
 	return nil
 }
 
-func (s PsqlStore) InsertFaceMatchJob(id string) error {
+func (s PsqlStore) InsertFaceMatchJobCompleted(img1ID, img2ID, clientID int, jobID string) error {
 	_, err := s.db.Exec(
-		"INSERT INTO face_match (job_id, status) VALUES ($1, 'created')",
-		id,
+		"INSERT INTO face_match (job_id, status, client_id, upload_id1, upload_id2) VALUES ($1, $2, $3, $4, $5)",
+		jobID, "created", clientID, img1ID, img2ID,
 	)
 	if err != nil {
 		return err
@@ -127,10 +127,82 @@ func (s PsqlStore) InsertFaceMatchJob(id string) error {
 	return nil
 }
 
-func (s PsqlStore) InsertOCRJob(id string) error {
+func (s PsqlStore) InsertOCRJobCompleted(imgID, clientID int, jobID string) error {
 	_, err := s.db.Exec(
-		"INSERT INTO ocr (job_id, status) VALUES ($1, 'created')",
-		id,
+		"INSERT INTO ocr (job_id, status, client_id, upload_id) VALUES ($1, $2, $3, $4)",
+		jobID, "created", clientID, imgID,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s PsqlStore) UpdateFaceMatchJobCompleted(jobID string, score int) error {
+	_, err := s.db.Exec(
+		"UPDATE face_match SET match_score = $1, completed_at = NOW(), status = $2 WHERE job_id = $3",
+		score, "completed", jobID,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s PsqlStore) UpdateOCRJobCompleted(jobID string, data *types.OCRResponse) error {
+	_, err := s.db.Exec(
+		"UPDATE ocr SET details = $1, completed_at = NOW(), status = $2 WHERE job_id = $3",
+		data.String(), "completed", jobID,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s PsqlStore) UpdateFaceMatchJobProcessed(jobID string) error {
+	_, err := s.db.Exec(
+		"UPDATE face_match SET processed_at = NOW(), status = $1 WHERE job_id = $2",
+		"processed", jobID,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s PsqlStore) UpdateOCRJobProcessed(jobID string) error {
+	_, err := s.db.Exec(
+		"UPDATE ocr SET processed_at = NOW(), status = $1 WHERE job_id = $2",
+		"processed", jobID,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s PsqlStore) UpdateFaceMatchJobFailed(jobID, reason string) error {
+	_, err := s.db.Exec(
+		"UPDATE face_match SET failed_at = NOW(), status = $1, failed_reason = $2 WHERE job_id = $3",
+		"failed", reason, jobID,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s PsqlStore) UpdateOCRJobFailed(jobID, reason string) error {
+	_, err := s.db.Exec(
+		"UPDATE ocr SET failed_at = NOW(), status = $1, failed_reason = $2 WHERE job_id = $3",
+		"failed", reason, jobID,
 	)
 	if err != nil {
 		return err

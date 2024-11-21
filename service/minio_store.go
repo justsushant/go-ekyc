@@ -54,3 +54,12 @@ func (m MinioStore) SaveFileToBucket(fileHeader *multipart.FileHeader, objectNam
 
 	return nil
 }
+
+func (m MinioStore) GetFileFromBucket(fileHeader *multipart.FileHeader, objectName string) (*minio.Object, error) {
+	object, err := m.client.GetObject(context.Background(), m.bucketName, objectName, minio.GetObjectOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return object, nil
+}

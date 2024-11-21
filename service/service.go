@@ -1,6 +1,8 @@
 package service
 
 import (
+	"encoding/json"
+	"log"
 	"mime/multipart"
 	"path/filepath"
 	"regexp"
@@ -218,19 +220,30 @@ func (c Service) PerformFaceMatchAsync(payload types.FaceMatchPayload, clientID 
 	// generate the job id
 	jobID := c.uuid.New()
 
+	// get metadata of both images
+	img1Data, _ := c.dataStore.GetMetaDataByUUID(payload.Image1)
+	img2Data, _ := c.dataStore.GetMetaDataByUUID(payload.Image2)
+
 	// mark the job started on the db
-	err = c.dataStore.InsertFaceMatchJob(jobID)
+	err = c.dataStore.InsertFaceMatchJobCompleted(img1Data.Id, img2Data.Id, clientID, jobID)
 	if err != nil {
 		return "", err
 	}
 
 	// push the job onto the queue
 	queuePayload := types.FaceMatchQueuePayload{
-		JobID:  jobID,
-		Image1: payload.Image1,
-		Image2: payload.Image2,
+		Type: types.FaceMatchWorkType,
+		Msg: types.FaceMatchInternalPayload{
+			JobID:  jobID,
+			Image1: payload.Image1,
+			Image2: payload.Image2,
+		},
 	}
-	c.queue.PushJobOnQueue(queuePayload)
+	jsonBytes, err := json.Marshal(queuePayload)
+	if err != nil {
+		log.Println("Error while marshalling JSON: ", err)
+	}
+	c.queue.PushJobOnQueue(jsonBytes)
 
 	return jobID, nil
 }
@@ -245,18 +258,28 @@ func (c Service) PerformOCRAsync(payload types.OCRPayload, clientID int) (string
 	// generate the job id
 	jobID := c.uuid.New()
 
+	// get metadata of both images
+	imgData, _ := c.dataStore.GetMetaDataByUUID(payload.Image)
+
 	// mark the job started on the db
-	err = c.dataStore.InsertOCRJob(jobID)
+	err = c.dataStore.InsertOCRJobCompleted(imgData.Id, clientID, jobID)
 	if err != nil {
 		return "", err
 	}
 
 	// push the job onto the queue
 	queuePayload := types.OCRQueuePayload{
-		JobID: jobID,
-		Image: payload.Image,
+		Type: types.OCRWorkType,
+		Msg: types.OCRInternalPayload{
+			JobID: jobID,
+			Image: payload.Image,
+		},
 	}
-	c.queue.PushJobOnQueueOCR(queuePayload)
+	jsonBytes, err := json.Marshal(queuePayload)
+	if err != nil {
+		log.Println("Error while marshalling JSON: ", err)
+	}
+	c.queue.PushJobOnQueue(jsonBytes)
 
 	return jobID, nil
 }

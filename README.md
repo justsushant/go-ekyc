@@ -23,3 +23,8 @@ A fully featured REST API for an online KYC (know your customer) system. This wi
 
 - Health check endpoint working
 - Migrate up implemented successfully
+
+
+# Bugs
+- for invalid access key, im not getting 401
+- in getmetadatfromuuid store function, "sql: no rows in result set" is returned. we need some apt error when no record if found for that particular uuid
