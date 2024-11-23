@@ -179,10 +179,8 @@ func (s PsqlStore) UpdateFaceMatchJobProcessed(jobID string) error {
 
 func (s PsqlStore) UpdateOCRJobProcessed(jobID string) error {
 	_, err := s.db.Exec(
-		"UPDATE ocr SET processed_at = NOW(), status = $1 WHERE job_id = $3",
-		// "UPDATE ocr SET processed_at = NOW(), status = $1 WHERE job_id = $2",
-		types.JobStatusProcessing,
-		// types.JobStatusProcessing, jobID,
+		"UPDATE ocr SET processed_at = NOW(), status = $1 WHERE job_id = $2",
+		types.JobStatusProcessing, jobID,
 	)
 	if err != nil {
 		return err
