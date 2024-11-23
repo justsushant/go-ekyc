@@ -14,12 +14,6 @@ type DataStore interface {
 	InsertOCRResult(result *types.OCRData) error
 	InsertFaceMatchJobCreated(img1ID, img2ID, clientID int, jobID string) error
 	InsertOCRJobCreated(imgId, clientID int, jobID string) error
-	UpdateFaceMatchJobCompleted(jobID string, score int) error
-	UpdateOCRJobCompleted(jobID string, result *types.OCRResponse) error
-	UpdateFaceMatchJobProcessed(jobID string) error
-	UpdateOCRJobProcessed(jobID string) error
-	UpdateFaceMatchJobFailed(jobID, reason string) error
-	UpdateOCRJobFailed(jobID, reason string) error
 	GetFaceMatchByJobID(jobID string) (*types.JobRecord, error)
 	GetOCRByJobID(jobID string) (*types.JobRecord, error)
 }

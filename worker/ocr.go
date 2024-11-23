@@ -1,6 +1,8 @@
 package worker
 
 import (
+	"time"
+
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
 )
 
@@ -11,7 +13,7 @@ func NewOCRService() *OCRService {
 }
 
 func (d *OCRService) PerformOCR(payload types.OCRPayload) (*types.OCRResponse, error) {
-	// time.Sleep(5 * time.Second)
+	time.Sleep(5 * time.Second)
 	return &types.OCRResponse{
 		Name:      "John Adams",
 		Gender:    "Male",

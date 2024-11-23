@@ -11,13 +11,13 @@ import (
 
 func main() {
 	// load configs
-	cfg, err := config.InitConfig()
+	cfg, err := config.Init()
 	if err != nil {
 		log.Fatalf("Error while config init: %v", err)
 	}
 
 	// get psql store
-	psqlStore := service.NewPsqlStore(cfg.DbDsn)
+	psqlStore := worker.NewPsqlWorkerStore(cfg.DbDsn)
 
 	// get minio store
 	minioConn := &db.MinioConn{
