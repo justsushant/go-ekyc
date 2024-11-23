@@ -44,6 +44,10 @@ type OCRData struct {
 	Data     string `json:"details"`
 }
 
+type FaceMatchResponse int
+
+type OCRResponseRaw json.RawMessage
+
 type OCRResponse struct {
 	Name      string `json:"name"`
 	Gender    string `json:"gender"`
@@ -88,4 +92,20 @@ type OCRInternalPayload struct {
 type OCRQueuePayload struct {
 	Type WorkType `json:"type"`
 	Msg  OCRInternalPayload
+}
+
+type JobRecord struct {
+	Type          WorkType          `json:"job_type"`
+	ID            int               `json:"id"`
+	ClientID      int               `json:"client_id"`
+	CreatedAt     string            `json:"created_at"`
+	JobID         string            `json:"job_id"`
+	Status        string            `json:"status"`
+	CompletedAt   string            `json:"completed_at"`
+	ProcessedAt   string            `json:"processed_at"`
+	FailedAt      string            `json:"failed_at"`
+	FailedReason  string            `json:"failed_reason"`
+	MatchScore    FaceMatchResponse `json:"match_score"`
+	RawOCRDetails json.RawMessage   `json:"details"`
+	OCRDetails    OCRResponse       `json:"-"`
 }

@@ -3,6 +3,7 @@ package handler
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -114,6 +115,72 @@ func (m mockService) PerformOCRAsync(payload types.OCRPayload, clientID int) (st
 	}
 
 	return "uuid-ok", nil
+}
+
+func (m mockService) GetJobDetailsByJobID(jobID, jobType string) (*types.JobRecord, error) {
+	if jobType == "face_match" && jobID == "qwerty" {
+		return &types.JobRecord{
+			ClientID: 2,
+			Type:     types.FaceMatchWorkType,
+		}, nil
+	}
+
+	if jobType == "ocr" && jobID == "zxcvb" {
+		return &types.JobRecord{
+			ClientID:    1,
+			Status:      types.JobStatusProcessing,
+			ProcessedAt: "timestamp",
+		}, nil
+	}
+
+	if jobType == "ocr" && jobID == "zxcvba" {
+		return &types.JobRecord{
+			ClientID:  1,
+			Status:    types.JobStatusCreated,
+			CreatedAt: "timestamp",
+			Type:      types.OCRWorkType,
+		}, nil
+	}
+
+	if jobType == "ocr" && jobID == "zgcvba" {
+		return &types.JobRecord{
+			ClientID:     1,
+			Status:       types.JobStatusFailed,
+			FailedAt:     "timestamp",
+			FailedReason: "reason",
+			Type:         types.OCRWorkType,
+		}, nil
+	}
+
+	if jobType == "face_match" && jobID == "mnlkpo" {
+		return &types.JobRecord{
+			ClientID:    1,
+			Status:      types.JobStatusCompleted,
+			CompletedAt: "timestamp",
+			MatchScore:  72,
+			Type:        types.FaceMatchWorkType,
+		}, nil
+	}
+
+	if jobType == "ocr" && jobID == "mnlkpo" {
+		return &types.JobRecord{
+			ClientID:    1,
+			Status:      types.JobStatusCompleted,
+			CompletedAt: "timestamp",
+			Type:        types.OCRWorkType,
+			OCRDetails: types.OCRResponse{
+				Name:      "xyz",
+				Gender:    "xyz",
+				DOB:       "xyz",
+				IdNumber:  "xyz",
+				AddrLine1: "xyz",
+				AddrLine2: "xyz",
+				Pincode:   "xyz",
+			},
+		}, nil
+	}
+
+	return nil, nil
 }
 
 func TestSignupHandler(t *testing.T) {
@@ -500,6 +567,90 @@ func TestOCRHandlerAsync(t *testing.T) {
 			// calling the signup handler
 			handler := NewHandler(&mockService{})
 			handler.OCRHandlerAsync(c)
+
+			// asserting the values
+			assert.Equal(t, tc.expStatusCode, w.Code)
+			assert.JSONEq(t, tc.expResponse, w.Body.String())
+		})
+	}
+}
+
+func TestResultHandler(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	tt := []struct {
+		name          string
+		jobType       string
+		jobID         string
+		clientID      int
+		expStatusCode int
+		expResponse   string
+	}{
+		{
+			name:          "jobID for different client",
+			jobType:       "face_match",
+			jobID:         "qwerty",
+			clientID:      1,
+			expStatusCode: 400,
+			expResponse:   `{ "errorMessage": "invalid or missing job id" }`,
+		},
+		{
+			name:          "job is still processing",
+			jobType:       "ocr",
+			jobID:         "zxcvb",
+			clientID:      1,
+			expStatusCode: 200,
+			expResponse:   `{ "status": "processing", "processed_at": "timestamp", "message": "job is still running"}`,
+		},
+		{
+			name:          "job is created",
+			jobType:       "ocr",
+			jobID:         "zxcvba",
+			clientID:      1,
+			expStatusCode: 200,
+			expResponse:   `{ "status": "created", "created_at": "timestamp", "message": "job is created"}`,
+		},
+		{
+			name:          "job is failed",
+			jobType:       "ocr",
+			jobID:         "zgcvba",
+			clientID:      1,
+			expStatusCode: 200,
+			expResponse:   `{ "status": "failed", "failed_at": "timestamp", "message": "job is failed", "failed_reason": "reason"}`,
+		},
+		{
+			name:          "job is completed face_match",
+			jobType:       "face_match",
+			jobID:         "mnlkpo",
+			clientID:      1,
+			expStatusCode: 200,
+			expResponse:   `{ "status": "completed", "completed_at": "timestamp", "message": "job is completed", "result": 72}`,
+		},
+		{
+			name:          "job is completed ocr",
+			jobType:       "ocr",
+			jobID:         "mnlkpo",
+			clientID:      1,
+			expStatusCode: 200,
+			expResponse:   `{"completed_at": "timestamp", "message": "job is completed", "result": {"name":"xyz","gender":"xyz","dateOfBirth":"xyz","idNumber":"xyz","addressLine1":"xyz","addressLine2":"xyz","pincode":"xyz"}, "status": "completed"}`,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// preparing the test
+			w := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(w)
+			c.Request = httptest.NewRequest("GET", fmt.Sprintf("/result/%s/%s", tc.jobType, tc.jobID), nil)
+			c.Request.Header.Set("Content-Type", "application/json")
+			c.Set("client_id", tc.clientID)
+			c.Params = []gin.Param{
+				{Key: "jobType", Value: tc.jobType},
+				{Key: "jobID", Value: tc.jobID},
+			}
+
+			// calling the signup handler
+			handler := NewHandler(&mockService{})
+			handler.ResultHandler(c)
 
 			// asserting the values
 			assert.Equal(t, tc.expStatusCode, w.Code)

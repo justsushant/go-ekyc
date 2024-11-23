@@ -32,6 +32,7 @@ func (h *Handler) RegisterProtectedRoutes(router *gin.RouterGroup) {
 	router.POST("/ocr", h.OCRHandler)
 	router.POST("/face-match-async", h.FaceMatchHandlerAsync)
 	router.POST("/ocr-async", h.OCRHandlerAsync)
+	router.GET("/result/:jobType/:jobID", h.ResultHandler)
 }
 
 func (h *Handler) SignupHandler(c *gin.Context) {
@@ -131,8 +132,6 @@ func (h *Handler) FaceMatchHandler(c *gin.Context) {
 		return
 	}
 
-	log.Println("After validatio")
-
 	score, err := h.service.CalcAndSaveFaceMatchScore(payload, clientID.(int))
 	if err != nil {
 		c.JSON(400, gin.H{"errorMessage": err.Error()})
@@ -219,5 +218,80 @@ func (h *Handler) OCRHandlerAsync(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"id": id,
+	})
+}
+
+func (h *Handler) ResultHandler(c *gin.Context) {
+	jobID := c.Param("jobID")
+	jobType := c.Param("jobType")
+	clientID, ok := c.Get("client_id")
+	if !ok {
+		// TODO: what to do when ok is false, or clientID is nil
+	}
+
+	data, err := h.service.GetJobDetailsByJobID(jobID, jobType)
+	if err != nil {
+		log.Println("Error while fetching job details by job id: ", err)
+		c.JSON(500, gin.H{
+			"errorMessage": "Unexpected server error occurred",
+		})
+		return
+	}
+
+	// validate if client id of the job and client is same
+	if data.ClientID != clientID.(int) {
+		c.JSON(400, gin.H{
+			"errorMessage": service.ErrInvalidJobId.Error(),
+		})
+		return
+	}
+
+	// filter on the basis of status
+	switch data.Status {
+	case types.JobStatusProcessing:
+		c.JSON(200, gin.H{
+			"status":       data.Status,
+			"message":      "job is still running",
+			"processed_at": data.ProcessedAt,
+		})
+		return
+	case types.JobStatusCreated:
+		c.JSON(200, gin.H{
+			"status":     data.Status,
+			"message":    "job is created",
+			"created_at": data.CreatedAt,
+		})
+		return
+	case types.JobStatusFailed:
+		c.JSON(200, gin.H{
+			"status":        data.Status,
+			"message":       "job is failed",
+			"failed_at":     data.FailedAt,
+			"failed_reason": data.FailedReason,
+		})
+		return
+	case types.JobStatusCompleted:
+		switch data.Type {
+		case types.FaceMatchWorkType:
+			c.JSON(200, gin.H{
+				"status":       data.Status,
+				"message":      "job is completed",
+				"completed_at": data.CompletedAt,
+				"result":       data.MatchScore,
+			})
+			return
+		case types.OCRWorkType:
+			c.JSON(200, gin.H{
+				"status":       data.Status,
+				"message":      "job is completed",
+				"completed_at": data.CompletedAt,
+				"result":       data.OCRDetails,
+			})
+			return
+		}
+	}
+
+	c.JSON(500, gin.H{
+		"errorMessage": "Unexpected server error occurred",
 	})
 }

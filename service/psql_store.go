@@ -2,6 +2,8 @@ package service
 
 import (
 	"database/sql"
+	"encoding/json"
+	"fmt"
 
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/db"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
@@ -115,10 +117,10 @@ func (s PsqlStore) InsertOCRResult(result *types.OCRData) error {
 	return nil
 }
 
-func (s PsqlStore) InsertFaceMatchJobCompleted(img1ID, img2ID, clientID int, jobID string) error {
+func (s PsqlStore) InsertFaceMatchJobCreated(img1ID, img2ID, clientID int, jobID string) error {
 	_, err := s.db.Exec(
 		"INSERT INTO face_match (job_id, status, client_id, upload_id1, upload_id2) VALUES ($1, $2, $3, $4, $5)",
-		jobID, "created", clientID, img1ID, img2ID,
+		jobID, types.JobStatusCreated, clientID, img1ID, img2ID,
 	)
 	if err != nil {
 		return err
@@ -127,10 +129,10 @@ func (s PsqlStore) InsertFaceMatchJobCompleted(img1ID, img2ID, clientID int, job
 	return nil
 }
 
-func (s PsqlStore) InsertOCRJobCompleted(imgID, clientID int, jobID string) error {
+func (s PsqlStore) InsertOCRJobCreated(imgID, clientID int, jobID string) error {
 	_, err := s.db.Exec(
 		"INSERT INTO ocr (job_id, status, client_id, upload_id) VALUES ($1, $2, $3, $4)",
-		jobID, "created", clientID, imgID,
+		jobID, types.JobStatusCreated, clientID, imgID,
 	)
 	if err != nil {
 		return err
@@ -142,7 +144,7 @@ func (s PsqlStore) InsertOCRJobCompleted(imgID, clientID int, jobID string) erro
 func (s PsqlStore) UpdateFaceMatchJobCompleted(jobID string, score int) error {
 	_, err := s.db.Exec(
 		"UPDATE face_match SET match_score = $1, completed_at = NOW(), status = $2 WHERE job_id = $3",
-		score, "completed", jobID,
+		score, types.JobStatusCompleted, jobID,
 	)
 	if err != nil {
 		return err
@@ -154,7 +156,7 @@ func (s PsqlStore) UpdateFaceMatchJobCompleted(jobID string, score int) error {
 func (s PsqlStore) UpdateOCRJobCompleted(jobID string, data *types.OCRResponse) error {
 	_, err := s.db.Exec(
 		"UPDATE ocr SET details = $1, completed_at = NOW(), status = $2 WHERE job_id = $3",
-		data.String(), "completed", jobID,
+		data.String(), types.JobStatusCompleted, jobID,
 	)
 	if err != nil {
 		return err
@@ -166,7 +168,7 @@ func (s PsqlStore) UpdateOCRJobCompleted(jobID string, data *types.OCRResponse) 
 func (s PsqlStore) UpdateFaceMatchJobProcessed(jobID string) error {
 	_, err := s.db.Exec(
 		"UPDATE face_match SET processed_at = NOW(), status = $1 WHERE job_id = $2",
-		"processed", jobID,
+		types.JobStatusProcessing, jobID,
 	)
 	if err != nil {
 		return err
@@ -177,8 +179,10 @@ func (s PsqlStore) UpdateFaceMatchJobProcessed(jobID string) error {
 
 func (s PsqlStore) UpdateOCRJobProcessed(jobID string) error {
 	_, err := s.db.Exec(
-		"UPDATE ocr SET processed_at = NOW(), status = $1 WHERE job_id = $2",
-		"processed", jobID,
+		"UPDATE ocr SET processed_at = NOW(), status = $1 WHERE job_id = $3",
+		// "UPDATE ocr SET processed_at = NOW(), status = $1 WHERE job_id = $2",
+		types.JobStatusProcessing,
+		// types.JobStatusProcessing, jobID,
 	)
 	if err != nil {
 		return err
@@ -190,7 +194,7 @@ func (s PsqlStore) UpdateOCRJobProcessed(jobID string) error {
 func (s PsqlStore) UpdateFaceMatchJobFailed(jobID, reason string) error {
 	_, err := s.db.Exec(
 		"UPDATE face_match SET failed_at = NOW(), status = $1, failed_reason = $2 WHERE job_id = $3",
-		"failed", reason, jobID,
+		types.JobStatusFailed, reason, jobID,
 	)
 	if err != nil {
 		return err
@@ -202,11 +206,102 @@ func (s PsqlStore) UpdateFaceMatchJobFailed(jobID, reason string) error {
 func (s PsqlStore) UpdateOCRJobFailed(jobID, reason string) error {
 	_, err := s.db.Exec(
 		"UPDATE ocr SET failed_at = NOW(), status = $1, failed_reason = $2 WHERE job_id = $3",
-		"failed", reason, jobID,
+		types.JobStatusFailed, reason, jobID,
 	)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (s PsqlStore) GetFaceMatchByJobID(jobID string) (*types.JobRecord, error) {
+	var faceMatchData types.JobRecord
+	var completedAt, processedAt, failedAt sql.NullTime
+	var failedReason sql.NullString
+	err := s.db.QueryRow(
+		"SELECT id, client_id, created_at, job_id, status, completed_at, processed_at, failed_at, failed_reason, match_score FROM face_match WHERE job_id = $1",
+		jobID,
+	).Scan(
+		&faceMatchData.ID,
+		&faceMatchData.ClientID,
+		&faceMatchData.CreatedAt,
+		&faceMatchData.JobID,
+		&faceMatchData.Status,
+		&completedAt,
+		&processedAt,
+		&failedAt,
+		&failedReason,
+		&faceMatchData.MatchScore,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// parsing the values
+	faceMatchData.CompletedAt = parseTimeValue(completedAt)
+	faceMatchData.ProcessedAt = parseTimeValue(processedAt)
+	faceMatchData.FailedAt = parseTimeValue(failedAt)
+	faceMatchData.FailedReason = parseStringValue(failedReason)
+
+	// setting the type of job
+	faceMatchData.Type = types.FaceMatchWorkType
+	return &faceMatchData, nil
+}
+
+func (s PsqlStore) GetOCRByJobID(jobID string) (*types.JobRecord, error) {
+	var ocrData types.JobRecord
+	var completedAt, processedAt, failedAt sql.NullTime
+	var failedReason sql.NullString
+	var rawOCRDetails json.RawMessage
+	err := s.db.QueryRow(
+		"SELECT id, client_id, created_at, job_id, status, completed_at, processed_at, failed_at, failed_reason, details FROM ocr WHERE job_id = $1",
+		jobID,
+	).Scan(
+		&ocrData.ID,
+		&ocrData.ClientID,
+		&ocrData.CreatedAt,
+		&ocrData.JobID,
+		&ocrData.Status,
+		&completedAt,
+		&processedAt,
+		&failedAt,
+		&failedReason,
+		&rawOCRDetails,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// setting the type of job
+	ocrData.Type = types.OCRWorkType
+
+	// parsing the values
+	ocrData.CompletedAt = parseTimeValue(completedAt)
+	ocrData.ProcessedAt = parseTimeValue(processedAt)
+	ocrData.FailedAt = parseTimeValue(failedAt)
+	ocrData.FailedReason = parseStringValue(failedReason)
+
+	// need to unmarshal the raw details saved in jsonb
+	if err := json.Unmarshal(rawOCRDetails, &ocrData.OCRDetails); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal ocr details: %v", err)
+	}
+
+	return &ocrData, nil
+}
+
+func parseTimeValue(dbTime sql.NullTime) string {
+	if dbTime.Valid {
+		return dbTime.Time.Format("2006-01-02 15:04:05.000000")
+	} else {
+		return "NULL"
+	}
+}
+
+func parseStringValue(dnString sql.NullString) string {
+	if dnString.Valid {
+		return dnString.String
+	} else {
+		return "NULL"
+	}
 }

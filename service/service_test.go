@@ -84,10 +84,10 @@ func (m *mockDataStore) GetMetaDataByUUID(imgUuid string) (*types.UploadMetaData
 
 func (m *mockDataStore) InsertFaceMatchResult(result *types.FaceMatchData) error { return nil }
 func (m *mockDataStore) InsertOCRResult(result *types.OCRData) error             { return nil }
-func (m *mockDataStore) InsertFaceMatchJobCompleted(id1, id2, clientID int, jobID string) error {
+func (m *mockDataStore) InsertFaceMatchJobCreated(id1, id2, clientID int, jobID string) error {
 	return nil
 }
-func (m *mockDataStore) InsertOCRJobCompleted(id1, client_id int, jobID string) error {
+func (m *mockDataStore) InsertOCRJobCreated(id1, client_id int, jobID string) error {
 	return nil
 }
 
@@ -99,10 +99,12 @@ func (m *mockDataStore) UpdateOCRJobCompleted(jobID string, data *types.OCRRespo
 	return nil
 }
 
-func (m *mockDataStore) UpdateFaceMatchJobProcessed(jobID string) error      { return nil }
-func (m *mockDataStore) UpdateOCRJobProcessed(jobID string) error            { return nil }
-func (m *mockDataStore) UpdateFaceMatchJobFailed(jobID, reason string) error { return nil }
-func (m *mockDataStore) UpdateOCRJobFailed(jobID, reason string) error       { return nil }
+func (m *mockDataStore) UpdateFaceMatchJobProcessed(jobID string) error             { return nil }
+func (m *mockDataStore) UpdateOCRJobProcessed(jobID string) error                   { return nil }
+func (m *mockDataStore) UpdateFaceMatchJobFailed(jobID, reason string) error        { return nil }
+func (m *mockDataStore) UpdateOCRJobFailed(jobID, reason string) error              { return nil }
+func (m *mockDataStore) GetFaceMatchByJobID(jobID string) (*types.JobRecord, error) { return nil, nil }
+func (m *mockDataStore) GetOCRByJobID(jobID string) (*types.JobRecord, error)       { return nil, nil }
 
 type mockFaceMatch struct{}
 

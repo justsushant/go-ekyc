@@ -10,3 +10,10 @@ type WorkType string
 
 const FaceMatchWorkType = "face_match"
 const OCRWorkType = "ocr"
+
+type JobStatus string
+
+const JobStatusProcessing = "processing"
+const JobStatusCreated = "created"
+const JobStatusCompleted = "completed"
+const JobStatusFailed = "failed"

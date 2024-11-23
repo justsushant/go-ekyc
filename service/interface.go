@@ -19,4 +19,5 @@ type ControllerInterface interface {
 	PerformAndSaveOCR(payload types.OCRPayload, clientID int) (*types.OCRResponse, error)
 	PerformFaceMatchAsync(payload types.FaceMatchPayload, clientID int) (string, error)
 	PerformOCRAsync(payload types.OCRPayload, clientID int) (string, error)
+	GetJobDetailsByJobID(jobID, jobType string) (*types.JobRecord, error)
 }

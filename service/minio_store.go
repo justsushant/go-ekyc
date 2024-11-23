@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"io"
 	"log"
 	"mime/multipart"
 
@@ -55,11 +56,19 @@ func (m MinioStore) SaveFileToBucket(fileHeader *multipart.FileHeader, objectNam
 	return nil
 }
 
-func (m MinioStore) GetFileFromBucket(fileHeader *multipart.FileHeader, objectName string) (*minio.Object, error) {
-	object, err := m.client.GetObject(context.Background(), m.bucketName, objectName, minio.GetObjectOptions{})
+func (m MinioStore) GetFile(filePath string) ([]byte, error) {
+	// fetch the object
+	object, err := m.client.GetObject(context.Background(), m.bucketName, filePath, minio.GetObjectOptions{})
+	if err != nil {
+		return nil, err
+	}
+	defer object.Close()
+
+	// read the object in bytes
+	data, err := io.ReadAll(object)
 	if err != nil {
 		return nil, err
 	}
 
-	return object, nil
+	return data, nil
 }

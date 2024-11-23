@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"mime/multipart"
 	"path/filepath"
@@ -144,7 +145,6 @@ func (c Service) CalcAndSaveFaceMatchScore(payload types.FaceMatchPayload, clien
 	if err != nil {
 		return 0, err
 	}
-
 	result := &types.FaceMatchData{
 		ClientID: clientID,
 		ImageID1: imgData1.Id,
@@ -225,7 +225,7 @@ func (c Service) PerformFaceMatchAsync(payload types.FaceMatchPayload, clientID 
 	img2Data, _ := c.dataStore.GetMetaDataByUUID(payload.Image2)
 
 	// mark the job started on the db
-	err = c.dataStore.InsertFaceMatchJobCompleted(img1Data.Id, img2Data.Id, clientID, jobID)
+	err = c.dataStore.InsertFaceMatchJobCreated(img1Data.Id, img2Data.Id, clientID, jobID)
 	if err != nil {
 		return "", err
 	}
@@ -262,7 +262,7 @@ func (c Service) PerformOCRAsync(payload types.OCRPayload, clientID int) (string
 	imgData, _ := c.dataStore.GetMetaDataByUUID(payload.Image)
 
 	// mark the job started on the db
-	err = c.dataStore.InsertOCRJobCompleted(imgData.Id, clientID, jobID)
+	err = c.dataStore.InsertOCRJobCreated(imgData.Id, clientID, jobID)
 	if err != nil {
 		return "", err
 	}
@@ -380,4 +380,15 @@ func (c Service) validateImageForOCR(payload types.OCRPayload, clientID int) err
 	}
 
 	return nil
+}
+
+func (c Service) GetJobDetailsByJobID(jobID, jobType string) (*types.JobRecord, error) {
+	switch jobType {
+	case types.FaceMatchWorkType:
+		return c.dataStore.GetFaceMatchByJobID(jobID)
+	case types.OCRWorkType:
+		return c.dataStore.GetOCRByJobID(jobID)
+	default:
+		return nil, fmt.Errorf("invalid job type")
+	}
 }
