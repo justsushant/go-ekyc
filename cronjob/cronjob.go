@@ -1,14 +1,14 @@
 package cronjob
 
 import (
+	"bytes"
 	"fmt"
 	"log"
-	"mime/multipart"
-	"net/textproto"
 	"strings"
 	"time"
 
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/store"
+	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
 )
 
 type CronJob struct {
@@ -40,15 +40,14 @@ func (c *CronJob) CalcDailyReport() {
 	}
 
 	// save to file store
-	fileName := fmt.Sprintf("reports/%s", strings.ReplaceAll(currentDate, "-", ""))
-	mimeHeader := &textproto.MIMEHeader{}
-	mimeHeader.Add("Content-Type", "text/csv")
-	// file := multipart.NewReader(bytes.NewReader(csvBytes), "")
-	fileHeader := &multipart.FileHeader{
-		Filename: fileName,
-		Size:     int64(len(csvBytes)),
-		Header:   *mimeHeader,
+	file := &types.FileUpload{
+		Name:    fmt.Sprintf("reports/%s", strings.ReplaceAll(currentDate, "-", "")),
+		Content: bytes.NewReader(csvBytes),
+		Size:    int64(len(csvBytes)),
+		Headers: map[string]string{
+			"Content-Type": "text/csv",
+		},
 	}
-	c.fileStore.SaveFile(fileHeader, fileName)
+	c.fileStore.SaveFile(file)
 
 }

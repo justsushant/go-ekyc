@@ -1,7 +1,6 @@
 package cronjob
 
 import (
-	"mime/multipart"
 	"testing"
 
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
@@ -52,7 +51,7 @@ type mockCronJobFileStore struct {
 	counter int
 }
 
-func (mfs *mockCronJobFileStore) SaveFile(fileHeader *multipart.FileHeader, objectName string) error {
+func (mfs *mockCronJobFileStore) SaveFile(file *types.FileUpload) error {
 	mfs.counter++
 	return nil
 }
