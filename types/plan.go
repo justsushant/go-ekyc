@@ -1,5 +1,7 @@
 package types
 
+import "io"
+
 type Plan string
 
 const BasicPlan = "basic"
@@ -17,3 +19,10 @@ const JobStatusProcessing = "processing"
 const JobStatusCreated = "created"
 const JobStatusCompleted = "completed"
 const JobStatusFailed = "failed"
+
+type FileUpload struct {
+	Name    string
+	Content io.Reader
+	Size    int64
+	Headers map[string]string
+}

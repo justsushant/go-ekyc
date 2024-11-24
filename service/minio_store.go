@@ -4,9 +4,9 @@ import (
 	"context"
 	"io"
 	"log"
-	"mime/multipart"
 
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/db"
+	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
 	"github.com/minio/minio-go/v7"
 )
 
@@ -40,14 +40,9 @@ func NewMinioStore(conn *db.MinioConn, bucketName string) MinioStore {
 	}
 }
 
-func (m MinioStore) SaveFileToBucket(fileHeader *multipart.FileHeader, objectName string) error {
-	file, err := fileHeader.Open()
-	if err != nil {
-		return err
-	}
-
-	_, err = m.client.PutObject(context.Background(), m.bucketName, objectName, file, fileHeader.Size, minio.PutObjectOptions{
-		ContentType: fileHeader.Header.Get("Content-Type"),
+func (m MinioStore) SaveFile(file *types.FileUpload) error {
+	_, err := m.client.PutObject(context.Background(), m.bucketName, file.Name, file.Content, file.Size, minio.PutObjectOptions{
+		ContentType: file.Headers["Content-Type"],
 	})
 	if err != nil {
 		return err
@@ -55,6 +50,22 @@ func (m MinioStore) SaveFileToBucket(fileHeader *multipart.FileHeader, objectNam
 
 	return nil
 }
+
+// func (m MinioStore) SaveFile(fileHeader *multipart.FileHeader, objectName string) error {
+// 	file, err := fileHeader.Open()
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	_, err = m.client.PutObject(context.Background(), m.bucketName, objectName, file, fileHeader.Size, minio.PutObjectOptions{
+// 		ContentType: fileHeader.Header.Get("Content-Type"),
+// 	})
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	return nil
+// }
 
 func (m MinioStore) GetFile(filePath string) ([]byte, error) {
 	// fetch the object

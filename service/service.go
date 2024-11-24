@@ -82,7 +82,22 @@ func (c Service) ValidateFile(fileName, fileType string) error {
 
 func (c Service) SaveFile(fileHeader *multipart.FileHeader, uploadMetaData *types.UploadMetaData) error {
 	// save the file to filestore
-	err := c.fileStore.SaveFileToBucket(fileHeader, uploadMetaData.FilePath)
+	fileReader, err := fileHeader.Open()
+	if err != nil {
+		log.Printf("Error while reading the file: %s\n", err.Error())
+		return err
+	}
+
+	file := &types.FileUpload{
+		Name:    fileHeader.Filename,
+		Content: fileReader,
+		Size:    fileHeader.Size,
+		Headers: map[string]string{
+			"Content-Type": fileHeader.Header.Get("Content-Type"),
+		},
+	}
+
+	err = c.fileStore.SaveFile(file)
 	if err != nil {
 		return err
 	}
@@ -131,7 +146,7 @@ func (c Service) ValidateImage(payload types.FaceMatchPayload, clientID int) err
 }
 
 func (c Service) CalcAndSaveFaceMatchScore(payload types.FaceMatchPayload, clientID int) (int, error) {
-	score, err := c.faceMatch.CalcFaceMatchScore(payload)
+	score, err := c.faceMatch.PerformFaceMatch(payload)
 	if err != nil {
 		return 0, err
 	}

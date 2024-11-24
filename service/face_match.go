@@ -7,11 +7,11 @@ import (
 )
 
 type FaceMatcher interface {
-	CalcFaceMatchScore(payload types.FaceMatchPayload) (int, error)
+	PerformFaceMatch(payload types.FaceMatchPayload) (int, error)
 }
 
 type DummyFaceMatchService struct{}
 
-func (d *DummyFaceMatchService) CalcFaceMatchScore(payload types.FaceMatchPayload) (int, error) {
+func (d *DummyFaceMatchService) PerformFaceMatch(payload types.FaceMatchPayload) (int, error) {
 	return rand.Intn(100) + 1, nil
 }

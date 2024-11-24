@@ -87,28 +87,13 @@ func (m *mockDataStore) InsertOCRResult(result *types.OCRData) error            
 func (m *mockDataStore) InsertFaceMatchJobCreated(id1, id2, clientID int, jobID string) error {
 	return nil
 }
-func (m *mockDataStore) InsertOCRJobCreated(id1, client_id int, jobID string) error {
-	return nil
-}
-
-func (m *mockDataStore) UpdateFaceMatchJobCompleted(jobID string, score int) error {
-	return nil
-}
-
-func (m *mockDataStore) UpdateOCRJobCompleted(jobID string, data *types.OCRResponse) error {
-	return nil
-}
-
-func (m *mockDataStore) UpdateFaceMatchJobProcessed(jobID string) error             { return nil }
-func (m *mockDataStore) UpdateOCRJobProcessed(jobID string) error                   { return nil }
-func (m *mockDataStore) UpdateFaceMatchJobFailed(jobID, reason string) error        { return nil }
-func (m *mockDataStore) UpdateOCRJobFailed(jobID, reason string) error              { return nil }
+func (m *mockDataStore) InsertOCRJobCreated(id1, client_id int, jobID string) error { return nil }
 func (m *mockDataStore) GetFaceMatchByJobID(jobID string) (*types.JobRecord, error) { return nil, nil }
 func (m *mockDataStore) GetOCRByJobID(jobID string) (*types.JobRecord, error)       { return nil, nil }
 
 type mockFaceMatch struct{}
 
-func (mfm *mockFaceMatch) CalcFaceMatchScore(payload types.FaceMatchPayload) (int, error) {
+func (mfm *mockFaceMatch) PerformFaceMatch(payload types.FaceMatchPayload) (int, error) {
 	return 45, nil
 }
 
@@ -214,7 +199,7 @@ func TestValidateImage(t *testing.T) {
 	}
 }
 
-func TestCalcFaceMatchScore(t *testing.T) {
+func TestPerformFaceMatch(t *testing.T) {
 	tt := []struct {
 		name    string
 		payload types.FaceMatchPayload
