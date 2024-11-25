@@ -122,14 +122,16 @@ type ClientReport struct {
 	TotalStorageCost  string `csv:"storage_cost_usd"`
 }
 
-// type ClientReport struct {
-// 	ClientID          string `json:"client_id"`
-// 	Name              string `json:"name"`
-// 	Plan              string `json:"plan"`
-// 	Date              string `json:"date"`
-// 	TotalFaceMatch    string `json:"total_face_match_for_day"`
-// 	TotalOcr          string `json:"total_ocr_for_da"`
-// 	TotalImgStorageMB string `json:"total_image_storage_in_mb"`
-// 	TotalAPIUsageCost string `json:"api_usage_cost_usd"`
-// 	TotalStorageCost  string `json:"storage_cost_usd"`
-// }
+type ClientAPIUsage struct {
+	Date              string `csv:"date"`
+	TotalFaceMatch    string `csv:"total_face_match_for_day"`
+	TotalOcr          string `csv:"total_ocr_for_da"`
+	TotalImgStorageMB string `csv:"total_image_storage_in_mb"`
+	TotalAPIUsageCost string `csv:"api_usage_cost_usd"`
+	TotalStorageCost  string `csv:"storage_cost_usd"`
+}
+
+type ClientReportMonthly struct {
+	ClientID string           `csv:"client_id"`
+	Report   []ClientAPIUsage `csv:"report"`
+}

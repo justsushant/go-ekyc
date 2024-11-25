@@ -41,7 +41,7 @@ func (c *CronJob) CalcDailyReport() {
 
 	// save to file store
 	file := &types.FileUpload{
-		Name:    fmt.Sprintf("reports/%s", strings.ReplaceAll(currentDate, "-", "")),
+		Name:    fmt.Sprintf("reports/daily/%s", strings.ReplaceAll(currentDate, "-", "")),
 		Content: bytes.NewReader(csvBytes),
 		Size:    int64(len(csvBytes)),
 		Headers: map[string]string{
@@ -49,5 +49,33 @@ func (c *CronJob) CalcDailyReport() {
 		},
 	}
 	c.fileStore.SaveFile(file)
+}
 
+func (c *CronJob) CalcMonthlyReport(currentTime time.Time) {
+	// calc the required data from store layer
+	currentMonth := currentTime.Month()
+	currentYear := currentTime.Year()
+	data, err := c.dataStore.GetMonthlyReport(int(currentMonth), currentYear)
+	if err != nil {
+		log.Printf("Error while fetching data from store for month %d report: %s\n", currentMonth, err.Error())
+	}
+
+	for _, d := range data {
+		// convert into csv file
+		csvBytes, err := c.service.PrepareCSVForMonthlyReport(d)
+		if err != nil {
+			log.Printf("Error while preparing csv file for month %d: %s\n", currentMonth, err.Error())
+		}
+
+		// save to file store
+		file := &types.FileUpload{
+			Name:    fmt.Sprintf("reports/monthly/%s-%d%d", d.ClientID, currentMonth, currentYear),
+			Content: bytes.NewReader(csvBytes),
+			Size:    int64(len(csvBytes)),
+			Headers: map[string]string{
+				"Content-Type": "text/csv",
+			},
+		}
+		c.fileStore.SaveFile(file)
+	}
 }

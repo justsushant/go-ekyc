@@ -12,6 +12,7 @@ import (
 // TODO: change the name of interface
 type CronJobServiceInterface interface {
 	PrepareCSV([]*types.ClientReport) ([]byte, error)
+	PrepareCSVForMonthlyReport(data *types.ClientReportMonthly) ([]byte, error)
 }
 
 var ErrMissingReports = errors.New("no reports found")
@@ -38,4 +39,8 @@ func (s *CronJobService) PrepareCSV(data []*types.ClientReport) ([]byte, error) 
 	}
 
 	return buf.Bytes(), nil
+}
+
+func (s *CronJobService) PrepareCSVForMonthlyReport(data *types.ClientReportMonthly) ([]byte, error) {
+	return nil, nil
 }

@@ -2,6 +2,7 @@ package cronjob
 
 import (
 	"testing"
+	"time"
 
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
 )
@@ -37,12 +38,64 @@ func (mst *mockCronJobStore) GetReportData(date string) ([]*types.ClientReport, 
 		},
 	}, nil
 }
+func (mst *mockCronJobStore) GetMonthlyReport(currentMonth, currentYear int) ([]*types.ClientReportMonthly, error) {
+	mst.counter++
+	return []*types.ClientReportMonthly{
+		{
+			ClientID: "1",
+			Report: []types.ClientAPIUsage{
+				{
+					Date:              "2024-11-22",
+					TotalFaceMatch:    "5",
+					TotalOcr:          "2",
+					TotalImgStorageMB: "10",
+					TotalAPIUsageCost: "12",
+					TotalStorageCost:  "10",
+				},
+				{
+					Date:              "2024-11-23",
+					TotalFaceMatch:    "7",
+					TotalOcr:          "4",
+					TotalImgStorageMB: "12",
+					TotalAPIUsageCost: "14",
+					TotalStorageCost:  "12",
+				},
+			},
+		},
+		{
+			ClientID: "2",
+			Report: []types.ClientAPIUsage{
+				{
+					Date:              "2024-11-22",
+					TotalFaceMatch:    "7",
+					TotalOcr:          "4",
+					TotalImgStorageMB: "12",
+					TotalAPIUsageCost: "14",
+					TotalStorageCost:  "12",
+				},
+				{
+					Date:              "2024-11-23",
+					TotalFaceMatch:    "5",
+					TotalOcr:          "2",
+					TotalImgStorageMB: "10",
+					TotalAPIUsageCost: "12",
+					TotalStorageCost:  "10",
+				},
+			},
+		},
+	}, nil
+}
 
 type mockCronJobService struct {
 	counter int
 }
 
 func (mse *mockCronJobService) PrepareCSV([]*types.ClientReport) ([]byte, error) {
+	mse.counter++
+	return nil, nil
+}
+
+func (mse *mockCronJobService) PrepareCSVForMonthlyReport(data *types.ClientReportMonthly) ([]byte, error) {
 	mse.counter++
 	return nil, nil
 }
@@ -77,5 +130,45 @@ func TestCalcDailyReport(t *testing.T) {
 	}
 	if mockFileStore.counter != 1 {
 		t.Errorf("Expected mock file store counter to be %d but got %d", 1, mockFileStore.counter)
+	}
+}
+
+func TestCalcMonthlyReport(t *testing.T) {
+	tt := []struct {
+		name                string
+		time                time.Time
+		expDStoreCallCount  int
+		expFStoreCallCount  int
+		expServiceCallCount int
+	}{
+		{
+			name:                "monthly report with two clients",
+			time:                time.Date(2024, time.November, 1, 0, 0, 0, 0, time.UTC),
+			expDStoreCallCount:  1,
+			expFStoreCallCount:  2,
+			expServiceCallCount: 2,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// call the method
+			mockService := &mockCronJobService{}
+			mockDataStore := &mockCronJobStore{}
+			mockFileStore := &mockCronJobFileStore{}
+			cj := NewCronJob(mockDataStore, mockFileStore, mockService)
+			cj.CalcMonthlyReport(tc.time)
+
+			// check if the required call stack was followed
+			if mockService.counter != tc.expServiceCallCount {
+				t.Errorf("Expected mock service counter to be %d but got %d", tc.expServiceCallCount, mockService.counter)
+			}
+			if mockDataStore.counter != tc.expDStoreCallCount {
+				t.Errorf("Expected mock data store counter to be %d but got %d", tc.expDStoreCallCount, mockDataStore.counter)
+			}
+			if mockFileStore.counter != tc.expFStoreCallCount {
+				t.Errorf("Expected mock file store counter to be %d but got %d", tc.expFStoreCallCount, mockFileStore.counter)
+			}
+		})
 	}
 }
