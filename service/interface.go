@@ -6,8 +6,7 @@ import (
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
 )
 
-// TODO: Change the interface name
-type ControllerInterface interface {
+type ServiceManager interface {
 	ValidatePayload(payload types.SignupPayload) error
 	GenerateKeyPair() (*KeyPair, error)
 	SaveSignupData(payload types.SignupPayload, keyPair *KeyPair) error

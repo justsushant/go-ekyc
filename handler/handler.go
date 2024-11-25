@@ -13,10 +13,10 @@ import (
 )
 
 type Handler struct {
-	service service.ControllerInterface
+	service service.ServiceManager
 }
 
-func NewHandler(service service.ControllerInterface) Handler {
+func NewHandler(service service.ServiceManager) Handler {
 	return Handler{
 		service: service,
 	}
@@ -154,7 +154,7 @@ func (h *Handler) OCRHandler(c *gin.Context) {
 	// generating UUID for file name
 	clientID, ok := c.Get("client_id")
 	if !ok {
-		// TODO: fetch clientID here using
+		// TODO: what to do when ok is false, or clientID is nil
 	}
 
 	if err := h.service.ValidateImageOCR(payload, clientID.(int)); err != nil {
@@ -186,7 +186,7 @@ func (h *Handler) FaceMatchHandlerAsync(c *gin.Context) {
 	}
 
 	// fetch data from cache
-	jobID, ok := h.service.FetchDataFromCache(payload, clientID.(int), types.FaceMatchWorkType)
+	jobID, ok := h.service.FetchDataFromCache(payload, clientID.(int), types.FACE_MATCH_WORK_TYPE)
 	if ok {
 		c.JSON(200, gin.H{
 			"id": jobID,
@@ -201,7 +201,7 @@ func (h *Handler) FaceMatchHandlerAsync(c *gin.Context) {
 	}
 
 	// set data in cache
-	h.service.SetDataInCache(payload, clientID.(int), types.FaceMatchWorkType, jobID)
+	h.service.SetDataInCache(payload, clientID.(int), types.FACE_MATCH_WORK_TYPE, jobID)
 
 	c.JSON(200, gin.H{
 		"id": jobID,
@@ -219,11 +219,11 @@ func (h *Handler) OCRHandlerAsync(c *gin.Context) {
 	// generating UUID for file name
 	clientID, ok := c.Get("client_id")
 	if !ok {
-		// TODO: fetch clientID here using
+		// TODO: what to do when ok is false, or clientID is nil
 	}
 
 	// fetch data from cache
-	jobID, ok := h.service.FetchDataFromCache(payload, clientID.(int), types.OCRWorkType)
+	jobID, ok := h.service.FetchDataFromCache(payload, clientID.(int), types.OCR_WORK_TYPE)
 	if ok {
 		c.JSON(200, gin.H{
 			"id": jobID,
@@ -238,7 +238,7 @@ func (h *Handler) OCRHandlerAsync(c *gin.Context) {
 	}
 
 	// set data in cache
-	h.service.SetDataInCache(payload, clientID.(int), types.OCRWorkType, jobID)
+	h.service.SetDataInCache(payload, clientID.(int), types.OCR_WORK_TYPE, jobID)
 
 	c.JSON(200, gin.H{
 		"id": jobID,
@@ -272,21 +272,21 @@ func (h *Handler) ResultHandler(c *gin.Context) {
 
 	// filter on the basis of status
 	switch data.Status {
-	case types.JobStatusProcessing:
+	case types.JOB_STATUS_PROCESSING:
 		c.JSON(200, gin.H{
 			"status":       data.Status,
 			"message":      "job is still running",
 			"processed_at": data.ProcessedAt,
 		})
 		return
-	case types.JobStatusCreated:
+	case types.JOB_STATUS_CREATED:
 		c.JSON(200, gin.H{
 			"status":     data.Status,
 			"message":    "job is created",
 			"created_at": data.CreatedAt,
 		})
 		return
-	case types.JobStatusFailed:
+	case types.JOB_STATUS_FAILED:
 		c.JSON(200, gin.H{
 			"status":        data.Status,
 			"message":       "job is failed",
@@ -294,9 +294,9 @@ func (h *Handler) ResultHandler(c *gin.Context) {
 			"failed_reason": data.FailedReason,
 		})
 		return
-	case types.JobStatusCompleted:
+	case types.JOB_STATUS_COMPLETED:
 		switch data.Type {
-		case types.FaceMatchWorkType:
+		case types.FACE_MATCH_WORK_TYPE:
 			c.JSON(200, gin.H{
 				"status":       data.Status,
 				"message":      "job is completed",
@@ -304,7 +304,7 @@ func (h *Handler) ResultHandler(c *gin.Context) {
 				"result":       data.MatchScore,
 			})
 			return
-		case types.OCRWorkType:
+		case types.OCR_WORK_TYPE:
 			c.JSON(200, gin.H{
 				"status":       data.Status,
 				"message":      "job is completed",

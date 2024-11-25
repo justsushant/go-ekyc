@@ -10,7 +10,7 @@ import (
 )
 
 // TODO: change the name of interface
-type CronJobServiceInterface interface {
+type CronJobServiceManager interface {
 	PrepareCSV(data interface{}) ([]byte, error)
 }
 

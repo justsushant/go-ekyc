@@ -21,7 +21,7 @@ func NewPsqlWorkerStore(dsn string) PsqlWorkerStore {
 func (s PsqlWorkerStore) UpdateFaceMatchJobCompleted(jobID string, score int) error {
 	_, err := s.db.Exec(
 		"UPDATE face_match SET match_score = $1, completed_at = NOW(), status = $2 WHERE job_id = $3",
-		score, types.JobStatusCompleted, jobID,
+		score, types.JOB_STATUS_COMPLETED, jobID,
 	)
 	if err != nil {
 		return err
@@ -33,7 +33,7 @@ func (s PsqlWorkerStore) UpdateFaceMatchJobCompleted(jobID string, score int) er
 func (s PsqlWorkerStore) UpdateOCRJobCompleted(jobID string, data *types.OCRResponse) error {
 	_, err := s.db.Exec(
 		"UPDATE ocr SET details = $1, completed_at = NOW(), status = $2 WHERE job_id = $3",
-		data.String(), types.JobStatusCompleted, jobID,
+		data.String(), types.JOB_STATUS_COMPLETED, jobID,
 	)
 	if err != nil {
 		return err
@@ -45,7 +45,7 @@ func (s PsqlWorkerStore) UpdateOCRJobCompleted(jobID string, data *types.OCRResp
 func (s PsqlWorkerStore) UpdateFaceMatchJobProcessed(jobID string) error {
 	_, err := s.db.Exec(
 		"UPDATE face_match SET processed_at = NOW(), status = $1 WHERE job_id = $2",
-		types.JobStatusProcessing, jobID,
+		types.JOB_STATUS_PROCESSING, jobID,
 	)
 	if err != nil {
 		return err
@@ -57,7 +57,7 @@ func (s PsqlWorkerStore) UpdateFaceMatchJobProcessed(jobID string) error {
 func (s PsqlWorkerStore) UpdateOCRJobProcessed(jobID string) error {
 	_, err := s.db.Exec(
 		"UPDATE ocr SET processed_at = NOW(), status = $1 WHERE job_id = $2",
-		types.JobStatusProcessing, jobID,
+		types.JOB_STATUS_PROCESSING, jobID,
 	)
 	if err != nil {
 		return err
@@ -69,7 +69,7 @@ func (s PsqlWorkerStore) UpdateOCRJobProcessed(jobID string) error {
 func (s PsqlWorkerStore) UpdateFaceMatchJobFailed(jobID, reason string) error {
 	_, err := s.db.Exec(
 		"UPDATE face_match SET failed_at = NOW(), status = $1, failed_reason = $2 WHERE job_id = $3",
-		types.JobStatusFailed, reason, jobID,
+		types.JOB_STATUS_FAILED, reason, jobID,
 	)
 	if err != nil {
 		return err
@@ -81,7 +81,7 @@ func (s PsqlWorkerStore) UpdateFaceMatchJobFailed(jobID, reason string) error {
 func (s PsqlWorkerStore) UpdateOCRJobFailed(jobID, reason string) error {
 	_, err := s.db.Exec(
 		"UPDATE ocr SET failed_at = NOW(), status = $1, failed_reason = $2 WHERE job_id = $3",
-		types.JobStatusFailed, reason, jobID,
+		types.JOB_STATUS_FAILED, reason, jobID,
 	)
 	if err != nil {
 		return err

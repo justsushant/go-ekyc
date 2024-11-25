@@ -13,13 +13,13 @@ import (
 )
 
 type CronJob struct {
-	Service   CronJobServiceInterface
+	Service   CronJobServiceManager
 	DataStore store.CronJobDataStore
 	FileStore store.FileStore
 	Cron      *cron.Cron
 }
 
-func NewCronJob(dataStore store.CronJobDataStore, fileStore store.FileStore, service CronJobServiceInterface, cron *cron.Cron) *CronJob {
+func NewCronJob(dataStore store.CronJobDataStore, fileStore store.FileStore, service CronJobServiceManager, cron *cron.Cron) *CronJob {
 	return &CronJob{
 		DataStore: dataStore,
 		FileStore: fileStore,

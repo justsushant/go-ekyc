@@ -141,7 +141,7 @@ func (c Service) ValidateImage(payload types.FaceMatchPayload, clientID int) err
 	}
 
 	// if images are not of faces
-	if imgData1.Type != types.FaceType || imgData2.Type != types.FaceType {
+	if imgData1.Type != types.FACE_TYPE || imgData2.Type != types.FACE_TYPE {
 		return ErrNotFaceImg
 	}
 
@@ -221,7 +221,7 @@ func (c Service) ValidateImageOCR(payload types.OCRPayload, clientID int) error 
 	}
 
 	// if image is not of id card
-	if imgData.Type != types.IdCardType {
+	if imgData.Type != types.ID_CARD_TYPE {
 		return ErrNotIDCardImg
 	}
 
@@ -250,7 +250,7 @@ func (c Service) PerformFaceMatchAsync(payload types.FaceMatchPayload, clientID 
 
 	// push the job onto the queue
 	queuePayload := types.FaceMatchQueuePayload{
-		Type: types.FaceMatchWorkType,
+		Type: types.FACE_MATCH_WORK_TYPE,
 		Msg: types.FaceMatchInternalPayload{
 			JobID:  jobID,
 			Image1: payload.Image1,
@@ -287,7 +287,7 @@ func (c Service) PerformOCRAsync(payload types.OCRPayload, clientID int) (string
 
 	// push the job onto the queue
 	queuePayload := types.OCRQueuePayload{
-		Type: types.OCRWorkType,
+		Type: types.OCR_WORK_TYPE,
 		Msg: types.OCRInternalPayload{
 			JobID: jobID,
 			Image: payload.Image,
@@ -304,7 +304,7 @@ func (c Service) PerformOCRAsync(payload types.OCRPayload, clientID int) (string
 
 func validateFileType(fileType string) error {
 	switch fileType {
-	case types.FaceType, types.IdCardType:
+	case types.FACE_TYPE, types.ID_CARD_TYPE:
 		return nil
 	default:
 		return ErrInvalidFileType
@@ -331,7 +331,7 @@ func validateFileExt(fileName string) error {
 
 func validatePlan(plan string) error {
 	switch plan {
-	case types.BasicPlan, types.AdvancePlan, types.EnterprisePlan:
+	case types.BASIC_PLAN, types.ADVANCE_PLAN, types.ENTERPRISE_PLAN:
 		return nil
 	default:
 		return ErrInvalidPlan
@@ -365,10 +365,10 @@ func (c Service) validateImagesForFaceMatch(payload types.FaceMatchPayload, clie
 	}
 
 	// if images are not of faces
-	if imgData1.Type != types.FaceType {
+	if imgData1.Type != types.FACE_TYPE {
 		return ErrNotFaceImg
 	}
-	if imgData2.Type != types.FaceType {
+	if imgData2.Type != types.FACE_TYPE {
 		return ErrNotFaceImg
 	}
 
@@ -393,7 +393,7 @@ func (c Service) validateImageForOCR(payload types.OCRPayload, clientID int) err
 	}
 
 	// if image is not of id card
-	if imgData.Type != types.IdCardType {
+	if imgData.Type != types.ID_CARD_TYPE {
 		return ErrNotIDCardImg
 	}
 
@@ -402,9 +402,9 @@ func (c Service) validateImageForOCR(payload types.OCRPayload, clientID int) err
 
 func (c Service) GetJobDetailsByJobID(jobID, jobType string) (*types.JobRecord, error) {
 	switch jobType {
-	case types.FaceMatchWorkType:
+	case types.FACE_MATCH_WORK_TYPE:
 		return c.dataStore.GetFaceMatchByJobID(jobID)
-	case types.OCRWorkType:
+	case types.OCR_WORK_TYPE:
 		return c.dataStore.GetOCRByJobID(jobID)
 	default:
 		return nil, fmt.Errorf("invalid job type")

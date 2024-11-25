@@ -125,14 +125,14 @@ func (m mockService) GetJobDetailsByJobID(jobID, jobType string) (*types.JobReco
 	if jobType == "face_match" && jobID == "qwerty" {
 		return &types.JobRecord{
 			ClientID: 2,
-			Type:     types.FaceMatchWorkType,
+			Type:     types.FACE_MATCH_WORK_TYPE,
 		}, nil
 	}
 
 	if jobType == "ocr" && jobID == "zxcvb" {
 		return &types.JobRecord{
 			ClientID:    1,
-			Status:      types.JobStatusProcessing,
+			Status:      types.JOB_STATUS_PROCESSING,
 			ProcessedAt: "timestamp",
 		}, nil
 	}
@@ -140,38 +140,38 @@ func (m mockService) GetJobDetailsByJobID(jobID, jobType string) (*types.JobReco
 	if jobType == "ocr" && jobID == "zxcvba" {
 		return &types.JobRecord{
 			ClientID:  1,
-			Status:    types.JobStatusCreated,
+			Status:    types.JOB_STATUS_CREATED,
 			CreatedAt: "timestamp",
-			Type:      types.OCRWorkType,
+			Type:      types.OCR_WORK_TYPE,
 		}, nil
 	}
 
 	if jobType == "ocr" && jobID == "zgcvba" {
 		return &types.JobRecord{
 			ClientID:     1,
-			Status:       types.JobStatusFailed,
+			Status:       types.JOB_STATUS_FAILED,
 			FailedAt:     "timestamp",
 			FailedReason: "reason",
-			Type:         types.OCRWorkType,
+			Type:         types.OCR_WORK_TYPE,
 		}, nil
 	}
 
 	if jobType == "face_match" && jobID == "mnlkpo" {
 		return &types.JobRecord{
 			ClientID:    1,
-			Status:      types.JobStatusCompleted,
+			Status:      types.JOB_STATUS_COMPLETED,
 			CompletedAt: "timestamp",
 			MatchScore:  72,
-			Type:        types.FaceMatchWorkType,
+			Type:        types.FACE_MATCH_WORK_TYPE,
 		}, nil
 	}
 
 	if jobType == "ocr" && jobID == "mnlkpo" {
 		return &types.JobRecord{
 			ClientID:    1,
-			Status:      types.JobStatusCompleted,
+			Status:      types.JOB_STATUS_COMPLETED,
 			CompletedAt: "timestamp",
-			Type:        types.OCRWorkType,
+			Type:        types.OCR_WORK_TYPE,
 			OCRDetails: types.OCRResponse{
 				Name:      "xyz",
 				Gender:    "xyz",

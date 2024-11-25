@@ -2,7 +2,7 @@ package types
 
 import (
 	"encoding/json"
-	"log"
+	"io"
 )
 
 type ClientData struct {
@@ -22,9 +22,11 @@ type UploadMetaData struct {
 	FileSizeKB int64  `json:"file_size_kb"`
 }
 
-type FaceMatchPayload struct {
-	Image1 string `json:"image1"`
-	Image2 string `json:"image2"`
+type FileUpload struct {
+	Name    string
+	Content io.Reader
+	Size    int64
+	Headers map[string]string
 }
 
 type FaceMatchData struct {
@@ -34,64 +36,16 @@ type FaceMatchData struct {
 	Score    int `json:"score"`
 }
 
-type OCRPayload struct {
-	Image string `json:"image"`
-}
-
 type OCRData struct {
 	ClientID int    `json:"client_id"`
 	ImageID  int    `json:"upload_id"`
 	Data     string `json:"details"`
 }
 
-type FaceMatchResponse int
-
-type OCRResponseRaw json.RawMessage
-
-type OCRResponse struct {
-	Name      string `json:"name"`
-	Gender    string `json:"gender"`
-	DOB       string `json:"dateOfBirth"`
-	IdNumber  string `json:"idNumber"`
-	AddrLine1 string `json:"addressLine1"`
-	AddrLine2 string `json:"addressLine2"`
-	Pincode   string `json:"pincode"`
-}
-
-func (or *OCRResponse) String() string {
-	jsonData, err := json.Marshal(or)
-	if err != nil {
-		log.Fatal("Error while marshalling ocr response: ", err)
-	}
-
-	return string(jsonData)
-}
-
 type OCRResult struct {
 	ImageID  string      `json:"image"`
 	ClientID int         `json:"client_id"`
 	Data     OCRResponse `json:"details"`
-}
-
-type FaceMatchInternalPayload struct {
-	JobID  string `json:"job_id"`
-	Image1 string `json:"image1"`
-	Image2 string `json:"image2"`
-}
-
-type FaceMatchQueuePayload struct {
-	Type WorkType `json:"type"`
-	Msg  FaceMatchInternalPayload
-}
-
-type OCRInternalPayload struct {
-	JobID string `json:"job_id"`
-	Image string `json:"image"`
-}
-
-type OCRQueuePayload struct {
-	Type WorkType `json:"type"`
-	Msg  OCRInternalPayload
 }
 
 type JobRecord struct {

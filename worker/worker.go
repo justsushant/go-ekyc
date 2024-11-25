@@ -47,14 +47,14 @@ func (w *Worker) ProcessMessages() {
 
 		// call service on the basis of type in payload
 		switch q.Type {
-		case types.FaceMatchWorkType:
+		case types.FACE_MATCH_WORK_TYPE:
 			var s types.FaceMatchInternalPayload
 			if err := json.Unmarshal(q.Msg, &s); err != nil {
 				log.Println(err)
 			}
 
 			w.ProcessFaceMatchWork(s)
-		case types.OCRWorkType:
+		case types.OCR_WORK_TYPE:
 			var s types.OCRInternalPayload
 			if err := json.Unmarshal(q.Msg, &s); err != nil {
 				log.Println(err)
@@ -70,7 +70,7 @@ func (w *Worker) ProcessFaceMatchWork(payload types.FaceMatchInternalPayload) {
 	err := w.dStore.UpdateFaceMatchJobProcessed(payload.JobID)
 	if err != nil {
 		log.Printf("Error while updating the face match job (%s) state to 'processing': %s\n", payload.JobID, err.Error())
-		w.changeStateToFailed(types.FaceMatchWorkType, payload.JobID, err.Error())
+		w.changeStateToFailed(types.FACE_MATCH_WORK_TYPE, payload.JobID, err.Error())
 		return
 	}
 
@@ -82,7 +82,7 @@ func (w *Worker) ProcessFaceMatchWork(payload types.FaceMatchInternalPayload) {
 	score, err := w.faceMatcher.PerformFaceMatch(p)
 	if err != nil {
 		log.Printf("Error while performing the face match job (%s): %s\n", payload.JobID, err.Error())
-		w.changeStateToFailed(types.FaceMatchWorkType, payload.JobID, err.Error())
+		w.changeStateToFailed(types.FACE_MATCH_WORK_TYPE, payload.JobID, err.Error())
 		return
 	}
 
@@ -90,7 +90,7 @@ func (w *Worker) ProcessFaceMatchWork(payload types.FaceMatchInternalPayload) {
 	err = w.dStore.UpdateFaceMatchJobCompleted(payload.JobID, score)
 	if err != nil {
 		log.Printf("Error while updating the face match job (%s) state to 'completed': %s\n", payload.JobID, err.Error())
-		w.changeStateToFailed(types.FaceMatchWorkType, payload.JobID, err.Error())
+		w.changeStateToFailed(types.FACE_MATCH_WORK_TYPE, payload.JobID, err.Error())
 		return
 	}
 }
@@ -100,7 +100,7 @@ func (w *Worker) ProcessOCRWork(payload types.OCRInternalPayload) {
 	err := w.dStore.UpdateOCRJobProcessed(payload.JobID)
 	if err != nil {
 		log.Printf("Error while updating the ocr job (%s) state to 'processing': %s\n", payload.JobID, err.Error())
-		w.changeStateToFailed(types.OCRWorkType, payload.JobID, err.Error())
+		w.changeStateToFailed(types.OCR_WORK_TYPE, payload.JobID, err.Error())
 		return
 	}
 
@@ -111,7 +111,7 @@ func (w *Worker) ProcessOCRWork(payload types.OCRInternalPayload) {
 	resp, err := w.ocr.PerformOCR(p)
 	if err != nil {
 		log.Printf("Error while performing the ocr job (%s): %s\n", payload.JobID, err.Error())
-		w.changeStateToFailed(types.OCRWorkType, payload.JobID, err.Error())
+		w.changeStateToFailed(types.OCR_WORK_TYPE, payload.JobID, err.Error())
 		return
 	}
 
@@ -119,20 +119,20 @@ func (w *Worker) ProcessOCRWork(payload types.OCRInternalPayload) {
 	err = w.dStore.UpdateOCRJobCompleted(payload.JobID, resp)
 	if err != nil {
 		log.Printf("Error while updating the face match job (%s) state to 'completed': %s\n", payload.JobID, err.Error())
-		w.changeStateToFailed(types.OCRWorkType, payload.JobID, err.Error())
+		w.changeStateToFailed(types.OCR_WORK_TYPE, payload.JobID, err.Error())
 		return
 	}
 }
 
 func (w *Worker) changeStateToFailed(jobType, jobID, errMessage string) {
 	switch jobType {
-	case types.FaceMatchWorkType:
+	case types.FACE_MATCH_WORK_TYPE:
 		err := w.dStore.UpdateFaceMatchJobFailed(jobID, errMessage)
 		if err != nil {
 			log.Printf("Error while updating the face match job (%s) state to 'failed': %s\n", jobID, errMessage)
 		}
 		return
-	case types.OCRWorkType:
+	case types.OCR_WORK_TYPE:
 		err := w.dStore.UpdateOCRJobFailed(jobID, errMessage)
 		if err != nil {
 			log.Printf("Error while updating the ocr job (%s) state to 'failed': %s\n", jobID, errMessage)

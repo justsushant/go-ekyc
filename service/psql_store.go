@@ -120,7 +120,7 @@ func (s PsqlStore) InsertOCRResult(result *types.OCRData) error {
 func (s PsqlStore) InsertFaceMatchJobCreated(img1ID, img2ID, clientID int, jobID string) error {
 	_, err := s.db.Exec(
 		"INSERT INTO face_match (job_id, status, client_id, upload_id1, upload_id2) VALUES ($1, $2, $3, $4, $5)",
-		jobID, types.JobStatusCreated, clientID, img1ID, img2ID,
+		jobID, types.JOB_STATUS_CREATED, clientID, img1ID, img2ID,
 	)
 	if err != nil {
 		return err
@@ -132,7 +132,7 @@ func (s PsqlStore) InsertFaceMatchJobCreated(img1ID, img2ID, clientID int, jobID
 func (s PsqlStore) InsertOCRJobCreated(imgID, clientID int, jobID string) error {
 	_, err := s.db.Exec(
 		"INSERT INTO ocr (job_id, status, client_id, upload_id) VALUES ($1, $2, $3, $4)",
-		jobID, types.JobStatusCreated, clientID, imgID,
+		jobID, types.JOB_STATUS_CREATED, clientID, imgID,
 	)
 	if err != nil {
 		return err
@@ -144,7 +144,7 @@ func (s PsqlStore) InsertOCRJobCreated(imgID, clientID int, jobID string) error 
 func (s PsqlStore) UpdateFaceMatchJobCompleted(jobID string, score int) error {
 	_, err := s.db.Exec(
 		"UPDATE face_match SET match_score = $1, completed_at = NOW(), status = $2 WHERE job_id = $3",
-		score, types.JobStatusCompleted, jobID,
+		score, types.JOB_STATUS_COMPLETED, jobID,
 	)
 	if err != nil {
 		return err
@@ -156,7 +156,7 @@ func (s PsqlStore) UpdateFaceMatchJobCompleted(jobID string, score int) error {
 func (s PsqlStore) UpdateOCRJobCompleted(jobID string, data *types.OCRResponse) error {
 	_, err := s.db.Exec(
 		"UPDATE ocr SET details = $1, completed_at = NOW(), status = $2 WHERE job_id = $3",
-		data.String(), types.JobStatusCompleted, jobID,
+		data.String(), types.JOB_STATUS_COMPLETED, jobID,
 	)
 	if err != nil {
 		return err
@@ -168,7 +168,7 @@ func (s PsqlStore) UpdateOCRJobCompleted(jobID string, data *types.OCRResponse) 
 func (s PsqlStore) UpdateFaceMatchJobProcessed(jobID string) error {
 	_, err := s.db.Exec(
 		"UPDATE face_match SET processed_at = NOW(), status = $1 WHERE job_id = $2",
-		types.JobStatusProcessing, jobID,
+		types.JOB_STATUS_PROCESSING, jobID,
 	)
 	if err != nil {
 		return err
@@ -180,7 +180,7 @@ func (s PsqlStore) UpdateFaceMatchJobProcessed(jobID string) error {
 func (s PsqlStore) UpdateOCRJobProcessed(jobID string) error {
 	_, err := s.db.Exec(
 		"UPDATE ocr SET processed_at = NOW(), status = $1 WHERE job_id = $2",
-		types.JobStatusProcessing, jobID,
+		types.JOB_STATUS_PROCESSING, jobID,
 	)
 	if err != nil {
 		return err
@@ -192,7 +192,7 @@ func (s PsqlStore) UpdateOCRJobProcessed(jobID string) error {
 func (s PsqlStore) UpdateFaceMatchJobFailed(jobID, reason string) error {
 	_, err := s.db.Exec(
 		"UPDATE face_match SET failed_at = NOW(), status = $1, failed_reason = $2 WHERE job_id = $3",
-		types.JobStatusFailed, reason, jobID,
+		types.JOB_STATUS_FAILED, reason, jobID,
 	)
 	if err != nil {
 		return err
@@ -204,7 +204,7 @@ func (s PsqlStore) UpdateFaceMatchJobFailed(jobID, reason string) error {
 func (s PsqlStore) UpdateOCRJobFailed(jobID, reason string) error {
 	_, err := s.db.Exec(
 		"UPDATE ocr SET failed_at = NOW(), status = $1, failed_reason = $2 WHERE job_id = $3",
-		types.JobStatusFailed, reason, jobID,
+		types.JOB_STATUS_FAILED, reason, jobID,
 	)
 	if err != nil {
 		return err
@@ -243,7 +243,7 @@ func (s PsqlStore) GetFaceMatchByJobID(jobID string) (*types.JobRecord, error) {
 	faceMatchData.FailedReason = parseStringValue(failedReason)
 
 	// setting the type of job
-	faceMatchData.Type = types.FaceMatchWorkType
+	faceMatchData.Type = types.FACE_MATCH_WORK_TYPE
 	return &faceMatchData, nil
 }
 
@@ -272,7 +272,7 @@ func (s PsqlStore) GetOCRByJobID(jobID string) (*types.JobRecord, error) {
 	}
 
 	// setting the type of job
-	ocrData.Type = types.OCRWorkType
+	ocrData.Type = types.OCR_WORK_TYPE
 
 	// parsing the values
 	ocrData.CompletedAt = parseTimeValue(completedAt)
