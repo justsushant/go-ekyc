@@ -122,16 +122,12 @@ type ClientReport struct {
 	TotalStorageCost  string `csv:"storage_cost_usd"`
 }
 
-type ClientAPIUsage struct {
+type ClientReportMonthly struct {
+	ClientID          string `csv:"client_id"`
 	Date              string `csv:"date"`
 	TotalFaceMatch    string `csv:"total_face_match_for_day"`
 	TotalOcr          string `csv:"total_ocr_for_da"`
 	TotalImgStorageMB string `csv:"total_image_storage_in_mb"`
 	TotalAPIUsageCost string `csv:"api_usage_cost_usd"`
 	TotalStorageCost  string `csv:"storage_cost_usd"`
-}
-
-type ClientReportMonthly struct {
-	ClientID string           `csv:"client_id"`
-	Report   []ClientAPIUsage `csv:"report"`
 }

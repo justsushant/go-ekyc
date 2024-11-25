@@ -41,7 +41,7 @@ func (c *CronJob) CalcDailyReport() {
 
 	// save to file store
 	file := &types.FileUpload{
-		Name:    fmt.Sprintf("reports/daily/%s", strings.ReplaceAll(currentDate, "-", "")),
+		Name:    c.getDailyReportPath(strings.ReplaceAll(currentDate, "-", "")),
 		Content: bytes.NewReader(csvBytes),
 		Size:    int64(len(csvBytes)),
 		Headers: map[string]string{
@@ -61,15 +61,21 @@ func (c *CronJob) CalcMonthlyReport(currentTime time.Time) {
 	}
 
 	for _, d := range data {
+		// extract client id
+		var clientID string
+		if len(d) != 0 {
+			clientID = d[0].ClientID
+		}
+
 		// convert into csv file
-		csvBytes, err := c.service.PrepareCSVForMonthlyReport(d)
+		csvBytes, err := c.service.PrepareCSV(d)
 		if err != nil {
 			log.Printf("Error while preparing csv file for month %d: %s\n", currentMonth, err.Error())
 		}
 
 		// save to file store
 		file := &types.FileUpload{
-			Name:    fmt.Sprintf("reports/monthly/%s-%d%d", d.ClientID, currentMonth, currentYear),
+			Name:    c.getMonthlyReportPath(clientID, int(currentMonth), currentYear),
 			Content: bytes.NewReader(csvBytes),
 			Size:    int64(len(csvBytes)),
 			Headers: map[string]string{
@@ -78,4 +84,12 @@ func (c *CronJob) CalcMonthlyReport(currentTime time.Time) {
 		}
 		c.fileStore.SaveFile(file)
 	}
+}
+
+func (c *CronJob) getDailyReportPath(date string) string {
+	return fmt.Sprintf("reports/daily/%s", strings.ReplaceAll(date, "-", ""))
+}
+
+func (c *CronJob) getMonthlyReportPath(clientID string, month, year int) string {
+	return fmt.Sprintf("reports/monthly/%s-%d%d", clientID, month, year)
 }

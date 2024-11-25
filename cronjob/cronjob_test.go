@@ -38,49 +38,47 @@ func (mst *mockCronJobStore) GetReportData(date string) ([]*types.ClientReport, 
 		},
 	}, nil
 }
-func (mst *mockCronJobStore) GetMonthlyReport(currentMonth, currentYear int) ([]*types.ClientReportMonthly, error) {
+func (mst *mockCronJobStore) GetMonthlyReport(currentMonth, currentYear int) ([][]*types.ClientReportMonthly, error) {
 	mst.counter++
-	return []*types.ClientReportMonthly{
-		{
-			ClientID: "1",
-			Report: []types.ClientAPIUsage{
-				{
-					Date:              "2024-11-22",
-					TotalFaceMatch:    "5",
-					TotalOcr:          "2",
-					TotalImgStorageMB: "10",
-					TotalAPIUsageCost: "12",
-					TotalStorageCost:  "10",
-				},
-				{
-					Date:              "2024-11-23",
-					TotalFaceMatch:    "7",
-					TotalOcr:          "4",
-					TotalImgStorageMB: "12",
-					TotalAPIUsageCost: "14",
-					TotalStorageCost:  "12",
-				},
+	return [][]*types.ClientReportMonthly{
+		[]*types.ClientReportMonthly{
+			{
+				ClientID:          "1",
+				Date:              "2024-11-22",
+				TotalFaceMatch:    "5",
+				TotalOcr:          "2",
+				TotalImgStorageMB: "10",
+				TotalAPIUsageCost: "12",
+				TotalStorageCost:  "10",
+			},
+			{
+				ClientID:          "1",
+				Date:              "2024-11-23",
+				TotalFaceMatch:    "7",
+				TotalOcr:          "4",
+				TotalImgStorageMB: "12",
+				TotalAPIUsageCost: "14",
+				TotalStorageCost:  "12",
 			},
 		},
-		{
-			ClientID: "2",
-			Report: []types.ClientAPIUsage{
-				{
-					Date:              "2024-11-22",
-					TotalFaceMatch:    "7",
-					TotalOcr:          "4",
-					TotalImgStorageMB: "12",
-					TotalAPIUsageCost: "14",
-					TotalStorageCost:  "12",
-				},
-				{
-					Date:              "2024-11-23",
-					TotalFaceMatch:    "5",
-					TotalOcr:          "2",
-					TotalImgStorageMB: "10",
-					TotalAPIUsageCost: "12",
-					TotalStorageCost:  "10",
-				},
+		[]*types.ClientReportMonthly{
+			{
+				ClientID:          "2",
+				Date:              "2024-11-22",
+				TotalFaceMatch:    "7",
+				TotalOcr:          "4",
+				TotalImgStorageMB: "12",
+				TotalAPIUsageCost: "14",
+				TotalStorageCost:  "12",
+			},
+			{
+				ClientID:          "2",
+				Date:              "2024-11-23",
+				TotalFaceMatch:    "5",
+				TotalOcr:          "2",
+				TotalImgStorageMB: "10",
+				TotalAPIUsageCost: "12",
+				TotalStorageCost:  "10",
 			},
 		},
 	}, nil
@@ -90,12 +88,7 @@ type mockCronJobService struct {
 	counter int
 }
 
-func (mse *mockCronJobService) PrepareCSV([]*types.ClientReport) ([]byte, error) {
-	mse.counter++
-	return nil, nil
-}
-
-func (mse *mockCronJobService) PrepareCSVForMonthlyReport(data *types.ClientReportMonthly) ([]byte, error) {
+func (mse *mockCronJobService) PrepareCSV(data interface{}) ([]byte, error) {
 	mse.counter++
 	return nil, nil
 }
