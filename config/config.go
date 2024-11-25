@@ -22,7 +22,7 @@ type Config struct {
 	RabbitMqQueueName string `env:"RABBITMQ_QUEUE_NAME,required"`
 }
 
-func InitConfig() (*Config, error) {
+func Init() (*Config, error) {
 	// load the env file
 	err := godotenv.Load()
 	if err != nil {

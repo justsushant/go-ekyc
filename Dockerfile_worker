@@ -1,0 +1,12 @@
+FROM golang:1.23.2-alpine AS builder
+WORKDIR /app
+COPY . .
+RUN go mod download
+RUN go build -o bin/go-ekyc-worker cmd/worker/worker.go
+
+
+FROM alpine
+WORKDIR /app
+COPY --from=builder /app/bin/go-ekyc-worker /app/go-ekyc-worker
+COPY --from=builder /app/.env /app/.env
+ENTRYPOINT ["/app/go-ekyc-worker"]

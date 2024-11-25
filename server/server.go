@@ -9,6 +9,8 @@ import (
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/middleware"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/service"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/store"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 type Server struct {
@@ -32,7 +34,12 @@ func NewServer(addr string, db store.DataStore, minio store.FileStore, redis sto
 func (s *Server) Run() {
 	router := gin.Default()
 
+	// endpoint for swagger docs
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	unprotectedRouter := router.Group("/api/v1")
+
+	// endpoint for health check
 	unprotectedRouter.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "OK",

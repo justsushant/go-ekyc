@@ -12,6 +12,7 @@ services:
       - 5432:5432
     volumes:
       - psql_data:/var/lib/postgresql/data
+
   minio:
     image: minio/minio:latest
     container_name: go-ekyc-minio
@@ -24,6 +25,19 @@ services:
     command: server /data
     volumes:
       - minio_data:/data 
+
+  rabbitmq:
+    image: rabbitmq:3.11-management
+    container_name: go-ekyc-rabbitmq
+    ports:
+      - "5672:5672" 
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
   redis:
     image: redis:latest
     container_name: go-ekyc-redis
@@ -32,6 +46,40 @@ services:
     command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
     volumes:
       - redis_data:/data
+
+  # app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile_app
+  #   container_name: go-ekyc-app
+  #   restart: always
+  #   ports:
+  #     - "8080:8080"
+  #   depends_on:
+  #     - database
+  #     - minio 
+  #     - rabbitmq
+  #     - redis
+  # worker:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile_worker
+  #   container_name: go-ekyc-worker
+  #   restart: always
+  #   depends_on:
+  #     - database
+  #     - minio 
+  #     - rabbitmq
+  #     - redis
+  # cronjob:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile_cronjob
+  #   container_name: go-ekyc-cronjob
+  #   restart: always
+  #   depends_on:
+  #     - database
+  #     - minio 
 
 volumes:
   psql_data:

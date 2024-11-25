@@ -23,7 +23,7 @@ var (
 // TODO: Implement the up and down with steps, by default only one step up or down
 
 func main() {
-	cfg, err := config.InitConfig()
+	cfg, err := config.Init()
 	if err != nil {
 		log.Fatalf("Error while config init: %v", err)
 	}
@@ -34,14 +34,8 @@ func main() {
 	flag.BoolVar(&isForce, "f", false, "force migration or not")
 	flag.Parse()
 
-	// extract database conn string
-	pgDsn := cfg.DbDsn
-	if pgDsn == "" {
-		log.Fatalf("Error: PostgreSQL dsn not found\n")
-	}
-
-	// create migration
-	mig, err := migrate.New(MIGRATION_FILES_PATH, pgDsn)
+	// create migration using migration file path and db conn string
+	mig, err := migrate.New(MIGRATION_FILES_PATH, cfg.DbDsn)
 	if err != nil {
 		log.Fatalf("Error occured while creating migration: %v\n", err)
 	}

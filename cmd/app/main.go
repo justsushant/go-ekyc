@@ -5,13 +5,17 @@ import (
 
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/config"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/db"
+	_ "github.com/justsushant/one2n-go-bootcamp/go-ekyc/docs"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/server"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/service"
 )
 
+// @title           Ekyc REST API
+// @version         1.0
+// @basePath 		/api/v1
 func main() {
 	// load configs
-	cfg, err := config.InitConfig()
+	cfg, err := config.Init()
 	if err != nil {
 		log.Fatalf("Error while config init: %v", err)
 	}

@@ -27,4 +27,6 @@ A fully featured REST API for an online KYC (know your customer) system. This wi
 
 # Bugs
 - for invalid access key, im not getting 401
-- in getmetadatfromuuid store function, "sql: no rows in result set" is returned. we need some apt error when no record if found for that particular uuid
+- in getmetadatfromuuid store function, "sql: no rows in result set" is returned. we need some apt error when no record if found for that particular uuid to show the client. do we even need it, in terms of exposing this detail to the client?
+- send ack after processing
+- how do we restrict the processing of same upload ids for face match and ocr from the db side, since client will be charged for every api call
