@@ -10,11 +10,13 @@ import (
 
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/store"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
+	"github.com/redis/go-redis/v9"
 )
 
 type Service struct {
 	dataStore  store.DataStore
 	fileStore  store.FileStore
+	cacheStore store.CacheStore
 	keyService KeyGenerator
 	faceMatch  FaceMatcher
 	ocrService OCRPerformer
@@ -22,11 +24,12 @@ type Service struct {
 	uuid       UUIDGen
 }
 
-func NewService(dataStore store.DataStore, fileStore store.FileStore, keyService KeyGenerator, faceMatch FaceMatcher, ocrService OCRPerformer, queue TaskQueue, uuid UUIDGen) Service {
+func NewService(dataStore store.DataStore, fileStore store.FileStore, keyService KeyGenerator, faceMatch FaceMatcher, ocrService OCRPerformer, queue TaskQueue, uuid UUIDGen, cacheStore store.CacheStore) Service {
 	return Service{
 		dataStore:  dataStore,
 		keyService: keyService,
 		fileStore:  fileStore,
+		cacheStore: cacheStore,
 		faceMatch:  faceMatch,
 		ocrService: ocrService,
 		queue:      queue,
@@ -405,5 +408,66 @@ func (c Service) GetJobDetailsByJobID(jobID, jobType string) (*types.JobRecord, 
 		return c.dataStore.GetOCRByJobID(jobID)
 	default:
 		return nil, fmt.Errorf("invalid job type")
+	}
+}
+
+func (c Service) FetchDataFromCache(payload interface{}, clientID int, jobType string) (string, bool) {
+	switch p := payload.(type) {
+	case types.FaceMatchPayload:
+		cacheKey1 := fmt.Sprintf("%s:%d:%s%s", jobType, clientID, p.Image1, p.Image2)
+		cacheKey2 := fmt.Sprintf("%s:%d:%s%s", jobType, clientID, p.Image2, p.Image1)
+
+		val := c.getObjFromCache(cacheKey1)
+		if val != "" {
+			return val, true
+		}
+
+		val = c.getObjFromCache(cacheKey2)
+		if val != "" {
+			return val, true
+		}
+
+		return "", false
+	case types.OCRPayload:
+		cacheKey1 := fmt.Sprintf("%s:%d:%s", jobType, clientID, p.Image)
+		val := c.getObjFromCache(cacheKey1)
+		if val != "" {
+			return val, true
+		}
+
+		return "", false
+	}
+
+	// TODO: this may cause bugs if switch is unable to match the payload with a type & both falsy values will be returned and handler will send empty string in response to client
+	return "", false
+}
+
+func (c Service) getObjFromCache(key string) string {
+	val, err := c.cacheStore.GetObject(key)
+	if err != nil && err != redis.Nil {
+		log.Printf("Error while fetching data from cache (%s): %s\n", key, err.Error())
+		return ""
+	}
+	return val
+}
+
+func (c Service) setObjInCache(key, val string) {
+	err := c.cacheStore.SetObject(key, val)
+	if err != nil {
+		log.Printf("Error while setting data in cache (%s): %s\n", key, err.Error())
+	}
+}
+
+func (c Service) SetDataInCache(payload interface{}, clientID int, jobType, jobID string) {
+	switch p := payload.(type) {
+	case types.FaceMatchPayload:
+		cacheKey1 := fmt.Sprintf("%s:%d:%s%s", jobType, clientID, p.Image1, p.Image2)
+		cacheKey2 := fmt.Sprintf("%s:%d:%s%s", jobType, clientID, p.Image2, p.Image1)
+
+		c.setObjInCache(cacheKey1, jobID)
+		c.setObjInCache(cacheKey2, jobID)
+	case types.OCRPayload:
+		cacheKey := fmt.Sprintf("%s:%d:%s", jobType, clientID, p.Image)
+		c.setObjInCache(cacheKey, jobID)
 	}
 }

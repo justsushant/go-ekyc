@@ -51,22 +51,6 @@ func (m MinioStore) SaveFile(file *types.FileUpload) error {
 	return nil
 }
 
-// func (m MinioStore) SaveFile(fileHeader *multipart.FileHeader, objectName string) error {
-// 	file, err := fileHeader.Open()
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	_, err = m.client.PutObject(context.Background(), m.bucketName, objectName, file, fileHeader.Size, minio.PutObjectOptions{
-// 		ContentType: fileHeader.Header.Get("Content-Type"),
-// 	})
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-// }
-
 func (m MinioStore) GetFile(filePath string) ([]byte, error) {
 	// fetch the object
 	object, err := m.client.GetObject(context.Background(), m.bucketName, filePath, minio.GetObjectOptions{})

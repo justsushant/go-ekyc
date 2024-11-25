@@ -185,14 +185,26 @@ func (h *Handler) FaceMatchHandlerAsync(c *gin.Context) {
 		// TODO: what to do when ok is false, or clientID is nil
 	}
 
-	id, err := h.service.PerformFaceMatchAsync(payload, clientID.(int))
+	// fetch data from cache
+	jobID, ok := h.service.FetchDataFromCache(payload, clientID.(int), types.FaceMatchWorkType)
+	if ok {
+		c.JSON(200, gin.H{
+			"id": jobID,
+		})
+		return
+	}
+
+	jobID, err = h.service.PerformFaceMatchAsync(payload, clientID.(int))
 	if err != nil {
 		c.JSON(400, gin.H{"errorMessage": err.Error()})
 		return
 	}
 
+	// set data in cache
+	h.service.SetDataInCache(payload, clientID.(int), types.FaceMatchWorkType, jobID)
+
 	c.JSON(200, gin.H{
-		"id": id,
+		"id": jobID,
 	})
 }
 
@@ -210,14 +222,26 @@ func (h *Handler) OCRHandlerAsync(c *gin.Context) {
 		// TODO: fetch clientID here using
 	}
 
-	id, err := h.service.PerformOCRAsync(payload, clientID.(int))
+	// fetch data from cache
+	jobID, ok := h.service.FetchDataFromCache(payload, clientID.(int), types.OCRWorkType)
+	if ok {
+		c.JSON(200, gin.H{
+			"id": jobID,
+		})
+		return
+	}
+
+	jobID, err = h.service.PerformOCRAsync(payload, clientID.(int))
 	if err != nil {
 		c.JSON(400, gin.H{"errorMessage": err.Error()})
 		return
 	}
 
+	// set data in cache
+	h.service.SetDataInCache(payload, clientID.(int), types.OCRWorkType, jobID)
+
 	c.JSON(200, gin.H{
-		"id": id,
+		"id": jobID,
 	})
 }
 

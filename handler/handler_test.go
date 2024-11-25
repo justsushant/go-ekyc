@@ -116,6 +116,10 @@ func (m mockService) PerformOCRAsync(payload types.OCRPayload, clientID int) (st
 
 	return "uuid-ok", nil
 }
+func (m mockService) FetchDataFromCache(payload interface{}, clientID int, jobType string) (string, bool) {
+	return "", false
+}
+func (m mockService) SetDataInCache(payload interface{}, clientID int, jobType, jobID string) {}
 
 func (m mockService) GetJobDetailsByJobID(jobID, jobType string) (*types.JobRecord, error) {
 	if jobType == "face_match" && jobID == "qwerty" {

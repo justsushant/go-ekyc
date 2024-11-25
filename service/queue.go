@@ -48,7 +48,6 @@ func NewTaskQueue(dsn, name string) *RabbitMqQueue {
 }
 
 func (t *RabbitMqQueue) PushJobOnQueue(payload []byte) error {
-	log.Println(string(payload))
 	err := t.ch.Publish(
 		"",
 		t.queue.Name,

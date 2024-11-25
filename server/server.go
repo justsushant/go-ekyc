@@ -48,7 +48,7 @@ func (s *Server) Run() {
 	dummyOcr := &service.DummyOcrService{}
 	uuid := &service.UuidService{}
 
-	service := service.NewService(s.db, s.minio, keyService, dummyFaceMatch, dummyOcr, s.queue, uuid)
+	service := service.NewService(s.db, s.minio, keyService, dummyFaceMatch, dummyOcr, s.queue, uuid, s.redis)
 	handler := handler.NewHandler(service)
 	handler.RegisterRoutes(unprotectedRouter)
 	handler.RegisterProtectedRoutes(protectedRouter)

@@ -13,4 +13,5 @@ var (
 	ErrNotFaceImg        = errors.New("not a face image")
 	ErrNotIDCardImg      = errors.New("not an id card image")
 	ErrInvalidJobId      = errors.New("invalid or missing job id")
+	ErrCacheNotFound     = errors.New("cache not found")
 )

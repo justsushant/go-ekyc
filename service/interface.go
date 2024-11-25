@@ -20,4 +20,6 @@ type ControllerInterface interface {
 	PerformFaceMatchAsync(payload types.FaceMatchPayload, clientID int) (string, error)
 	PerformOCRAsync(payload types.OCRPayload, clientID int) (string, error)
 	GetJobDetailsByJobID(jobID, jobType string) (*types.JobRecord, error)
+	FetchDataFromCache(payload interface{}, clientID int, jobType string) (string, bool)
+	SetDataInCache(payload interface{}, clientID int, jobType, jobID string)
 }
