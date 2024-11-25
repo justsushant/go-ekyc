@@ -23,18 +23,20 @@ func (am *AuthMiddleware) Middleware() gin.HandlerFunc {
 
 		if len(accessKey) == 0 || len(secretKey) == 0 {
 			c.JSON(401, gin.H{"errorMessage": "invalid access or secret key"})
+			c.Abort()
 			return
 		}
 
-		// TODO: A bug here, investigate. [GIN-debug] [WARNING] Headers were already written. Wanted to override status code 500 with 200. /api/v1/face-match
 		// get user details on the basis of access key
 		clientData, err := am.store.GetClientFromAccessKey(accessKey)
 		if err != nil {
-			c.JSON(500, gin.H{"errorMessage": err.Error()})
+			c.JSON(500, gin.H{"errorMessage": "invalid access or secret key"})
+			c.Abort()
 			return
 		}
 		if clientData == nil {
 			c.JSON(401, gin.H{"errorMessage": "invalid access or secret key"})
+			c.Abort()
 			return
 		}
 
@@ -42,6 +44,7 @@ func (am *AuthMiddleware) Middleware() gin.HandlerFunc {
 		err = bcrypt.CompareHashAndPassword([]byte(clientData.SecretKeyHash), []byte(secretKey))
 		if err != nil {
 			c.JSON(401, gin.H{"errorMessage": "invalid access or secret key"})
+			c.Abort()
 			return
 		}
 
