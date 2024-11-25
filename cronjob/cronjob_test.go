@@ -41,7 +41,7 @@ func (mst *mockCronJobStore) GetReportData(date string) ([]*types.ClientReport, 
 func (mst *mockCronJobStore) GetMonthlyReport(currentMonth, currentYear int) ([][]*types.ClientReportMonthly, error) {
 	mst.counter++
 	return [][]*types.ClientReportMonthly{
-		[]*types.ClientReportMonthly{
+		{
 			{
 				ClientID:          "1",
 				Date:              "2024-11-22",
@@ -61,7 +61,7 @@ func (mst *mockCronJobStore) GetMonthlyReport(currentMonth, currentYear int) ([]
 				TotalStorageCost:  "12",
 			},
 		},
-		[]*types.ClientReportMonthly{
+		{
 			{
 				ClientID:          "2",
 				Date:              "2024-11-22",
@@ -111,8 +111,12 @@ func TestCalcDailyReport(t *testing.T) {
 	mockService := &mockCronJobService{}
 	mockDataStore := &mockCronJobStore{}
 	mockFileStore := &mockCronJobFileStore{}
-	cj := NewCronJob(mockDataStore, mockFileStore, mockService)
-	cj.CalcDailyReport()
+	cj := &CronJob{
+		Service:   mockService,
+		DataStore: mockDataStore,
+		FileStore: mockFileStore,
+	}
+	cj.CalcDailyReport(time.Date(2024, time.November, 1, 0, 0, 0, 0, time.UTC))
 
 	// check if the required call stack was followed
 	if mockService.counter != 1 {
@@ -149,7 +153,11 @@ func TestCalcMonthlyReport(t *testing.T) {
 			mockService := &mockCronJobService{}
 			mockDataStore := &mockCronJobStore{}
 			mockFileStore := &mockCronJobFileStore{}
-			cj := NewCronJob(mockDataStore, mockFileStore, mockService)
+			cj := &CronJob{
+				Service:   mockService,
+				DataStore: mockDataStore,
+				FileStore: mockFileStore,
+			}
 			cj.CalcMonthlyReport(tc.time)
 
 			// check if the required call stack was followed

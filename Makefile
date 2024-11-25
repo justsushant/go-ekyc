@@ -13,5 +13,11 @@ create-worker:
 worker: create-worker
 	@./bin/go-ekyc-worker
 
+create-cronjob:
+	@go build -o bin/go-ekyc-cronjob cmd/cronjob/main.go
+
+cronjob: create-cronjob
+	@./bin/go-ekyc-cronjob
+
 test:
 	@go test ./...
