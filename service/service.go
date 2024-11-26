@@ -92,7 +92,7 @@ func (c Service) SaveFile(fileHeader *multipart.FileHeader, uploadMetaData *type
 	}
 
 	file := &types.FileUpload{
-		Name:    fileHeader.Filename,
+		Name:    uploadMetaData.FilePath,
 		Content: fileReader,
 		Size:    fileHeader.Size,
 		Headers: map[string]string{
@@ -414,23 +414,21 @@ func (c Service) GetJobDetailsByJobID(jobID, jobType string) (*types.JobRecord, 
 func (c Service) FetchDataFromCache(payload interface{}, clientID int, jobType string) (string, bool) {
 	switch p := payload.(type) {
 	case types.FaceMatchPayload:
-		cacheKey1 := fmt.Sprintf("%s:%d:%s%s", jobType, clientID, p.Image1, p.Image2)
-		cacheKey2 := fmt.Sprintf("%s:%d:%s%s", jobType, clientID, p.Image2, p.Image1)
+		key1 := fmt.Sprintf("%s:%d:%s", jobType, clientID, p.Image1)
+		key2 := fmt.Sprintf("%s:%d:%s", jobType, clientID, p.Image2)
+		cacheKey := c.makeHash(key1, key2)
 
-		val := c.getObjFromCache(cacheKey1)
-		if val != "" {
-			return val, true
-		}
-
-		val = c.getObjFromCache(cacheKey2)
+		val := c.getObjFromCache(cacheKey)
 		if val != "" {
 			return val, true
 		}
 
 		return "", false
 	case types.OCRPayload:
-		cacheKey1 := fmt.Sprintf("%s:%d:%s", jobType, clientID, p.Image)
-		val := c.getObjFromCache(cacheKey1)
+		key := fmt.Sprintf("%s:%d:%s", jobType, clientID, p.Image)
+		cacheKey := c.makeHash(key)
+
+		val := c.getObjFromCache(cacheKey)
 		if val != "" {
 			return val, true
 		}
@@ -461,13 +459,37 @@ func (c Service) setObjInCache(key, val string) {
 func (c Service) SetDataInCache(payload interface{}, clientID int, jobType, jobID string) {
 	switch p := payload.(type) {
 	case types.FaceMatchPayload:
-		cacheKey1 := fmt.Sprintf("%s:%d:%s%s", jobType, clientID, p.Image1, p.Image2)
-		cacheKey2 := fmt.Sprintf("%s:%d:%s%s", jobType, clientID, p.Image2, p.Image1)
-
-		c.setObjInCache(cacheKey1, jobID)
-		c.setObjInCache(cacheKey2, jobID)
+		cacheKey := c.makeHash(fmt.Sprintf("%s:%d:%s", jobType, clientID, p.Image1), fmt.Sprintf("%s:%d:%s", jobType, clientID, p.Image2))
+		c.setObjInCache(cacheKey, jobID)
 	case types.OCRPayload:
-		cacheKey := fmt.Sprintf("%s:%d:%s", jobType, clientID, p.Image)
+		cacheKey := c.makeHash(fmt.Sprintf("%s:%d:%s", jobType, clientID, p.Image), fmt.Sprintf("%s:%d:%s", jobType, clientID, p.Image))
 		c.setObjInCache(cacheKey, jobID)
 	}
+}
+
+func (c Service) makeHash(keys ...string) string {
+	if len(keys) == 2 {
+		key1Bytes := []byte(keys[0])
+		key2Bytes := []byte(keys[1])
+
+		// xor them byte by byte
+		xorBytes := make([]byte, len(key1Bytes))
+		for i := 0; i < len(key1Bytes); i++ {
+			xorBytes[i] = key1Bytes[i] ^ key2Bytes[i]
+		}
+
+		// generate SHA256 hash of the xor result
+		// hash := sha256.Sum256(xorBytes)
+		// return hex.EncodeToString(hash[:])
+		return string(xorBytes)
+	}
+
+	if len(keys) == 1 {
+		return keys[0]
+		// keyBytes := []byte(keys[0])
+		// hash := sha256.Sum256(keyBytes)
+		// return hex.EncodeToString(hash[:])
+	}
+
+	return keys[0]
 }
