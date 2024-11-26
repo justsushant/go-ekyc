@@ -61,6 +61,7 @@ func (w *Worker) ProcessMessages() {
 				payload.Reject(false) // message rejected, no requeue
 			}
 
+			log.Printf("Job ID %s processed successfully\n", s.JobID)
 			payload.Ack(false) // acknowledges the single message after successful processing
 		case types.OCR_WORK_TYPE:
 			var s types.OCRInternalPayload
@@ -75,6 +76,7 @@ func (w *Worker) ProcessMessages() {
 				payload.Reject(false) // message rejected, no requeue
 			}
 
+			log.Printf("Job ID %s processed successfully\n", s.JobID)
 			payload.Ack(false) // acknowledges the single message after successful processing
 		}
 	}

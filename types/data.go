@@ -70,7 +70,7 @@ type ClientReport struct {
 	Plan              string `csv:"plan"`
 	Date              string `csv:"date"`
 	TotalFaceMatch    string `csv:"total_face_match_for_day"`
-	TotalOcr          string `csv:"total_ocr_for_da"`
+	TotalOcr          string `csv:"total_ocr_for_day"`
 	TotalImgStorageMB string `csv:"total_image_storage_in_mb"`
 	TotalAPIUsageCost string `csv:"api_usage_cost_usd"`
 	TotalStorageCost  string `csv:"storage_cost_usd"`

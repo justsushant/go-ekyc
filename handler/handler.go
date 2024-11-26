@@ -97,7 +97,7 @@ func (h *Handler) FileUploadHandler(c *gin.Context) {
 		Type:       fileType,
 		ClientID:   clientID.(int),
 		FilePath:   strconv.Itoa(clientID.(int)) + "/" + objectName + filepath.Ext(fileHeader.Filename), // filepath is saved like, clientID/uuid.extension
-		FileSizeKB: fileHeader.Size,
+		FileSizeKB: fileHeader.Size / 1000,
 	}
 
 	// save the file to bucket and psql

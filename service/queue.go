@@ -80,8 +80,8 @@ func (t *RabbitMqQueue) PullJobFromQueue() (<-chan amqp.Delivery, error) {
 	msgs, err := t.ch.Consume(
 		t.queue.Name, // queue
 		"",           // consumer
-		// false,        // auto-ack
-		true,  // auto-ack
+		false,        // auto-ack
+		// true,  // auto-ack
 		false, // exclusive
 		false, // no-local
 		false, // no-wait
