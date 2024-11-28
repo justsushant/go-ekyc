@@ -5,6 +5,15 @@ import (
 	"log"
 )
 
+type ErrorResponse struct {
+	ErrorMessage error `json:"errorMessage"`
+}
+
+type SignupResponse struct {
+	AccessKey string `json:"accessKey"`
+	SecretKey string `json:"secretKey"`
+}
+
 type FaceMatchResponse int
 
 type OCRResponseRaw json.RawMessage

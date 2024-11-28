@@ -9,6 +9,7 @@ import (
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/middleware"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/service"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/store"
+
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
@@ -40,11 +41,7 @@ func (s *Server) Run() {
 	unprotectedRouter := router.Group("/api/v1")
 
 	// endpoint for health check
-	unprotectedRouter.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "OK",
-		})
-	})
+	unprotectedRouter.GET("/health", HealthCheckHandler)
 
 	authMiddleware := middleware.NewAuthMiddleware(s.db)
 	protectedRouter := router.Group("/api/v1")
@@ -64,4 +61,16 @@ func (s *Server) Run() {
 	if err := http.ListenAndServe(s.addr, router); err != nil {
 		log.Fatalf("Error occured while listening on %s: %v", s.addr, err)
 	}
+}
+
+// @Summary Health Check
+// @Description Checks if the service is online
+// @Tags Health
+// @Produce json
+// @Success 200 {object} map[string]string "Success Message"
+// @Router /api/v1/health [get]
+func HealthCheckHandler(c *gin.Context) {
+	c.JSON(200, gin.H{
+		"message": "OK",
+	})
 }

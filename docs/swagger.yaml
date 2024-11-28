@@ -1,7 +1,72 @@
 basePath: /api/v1
+definitions:
+  types.ErrorResponse:
+    properties:
+      errorMessage: {}
+    type: object
+  types.SignupResponse:
+    properties:
+      accessKey:
+        type: string
+      secretKey:
+        type: string
+    type: object
 info:
   contact: {}
   title: Ekyc REST API
   version: "1.0"
-paths: {}
+paths:
+  /api/v1/health:
+    get:
+      description: Checks if the service is online
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success Message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Health Check
+      tags:
+      - Health
+  /api/v1/signup:
+    post:
+      consumes:
+      - application/json
+      description: Signups the client
+      parameters:
+      - description: Name of client
+        in: body
+        name: name
+        required: true
+        schema:
+          type: string
+      - description: Email of client
+        in: body
+        name: email
+        required: true
+        schema:
+          type: string
+      - description: Name of plan
+        in: body
+        name: plan
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Access & secret keys
+          schema:
+            $ref: '#/definitions/types.SignupResponse'
+        "400":
+          description: invalid plan, supported plans are basic, advanced, or enterprise
+          schema:
+            $ref: '#/definitions/types.ErrorResponse'
+      summary: Signup
+      tags:
+      - Signup
 swagger: "2.0"

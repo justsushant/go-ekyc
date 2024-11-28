@@ -35,36 +35,48 @@ func (h *Handler) RegisterProtectedRoutes(router *gin.RouterGroup) {
 	router.GET("/result/:jobType/:jobID", h.ResultHandler)
 }
 
+// @Summary Signup
+// @Description Signups the client
+// @Tags Signup
+// @Accept json
+// @Produce json
+// @Param name body string true "Name of client"
+// @Param email body string true "Email of client"
+// @Param plan body string true "Name of plan"
+// @Success 200 {object} types.SignupResponse "Access & secret keys"
+// @Failure 400 {object} types.ErrorResponse "invalid email"
+// @Failure 400 {object} types.ErrorResponse "invalid plan, supported plans are basic, advanced, or enterprise"
+// @Router /api/v1/signup [post]
 func (h *Handler) SignupHandler(c *gin.Context) {
 	var payload types.SignupPayload
 	err := json.NewDecoder(c.Request.Body).Decode(&payload)
 	if err != nil {
-		c.JSON(400, gin.H{"errorMessage": err.Error()})
+		c.JSON(400, types.ErrorResponse{ErrorMessage: err})
 		return
 	}
 
 	if err := h.service.ValidatePayload(payload); err != nil {
-		c.JSON(400, gin.H{"errorMessage": err.Error()})
+		c.JSON(400, types.ErrorResponse{ErrorMessage: err})
 		return
 	}
 
 	keyPair, err := h.service.GenerateKeyPair()
 	if err != nil {
-		c.JSON(400, gin.H{"errorMessage": err.Error()})
+		c.JSON(400, types.ErrorResponse{ErrorMessage: err})
 		return
 	}
 
 	err = h.service.SaveSignupData(payload, keyPair)
 	if err != nil {
-		c.JSON(400, gin.H{"errorMessage": err.Error()})
+		c.JSON(400, types.ErrorResponse{ErrorMessage: err})
 		return
 	}
 
 	accessKey, secretKey := keyPair.GetKeysPrivate()
 
-	c.JSON(200, gin.H{
-		"accessKey": accessKey,
-		"secretKey": secretKey,
+	c.JSON(200, types.SignupResponse{
+		AccessKey: accessKey,
+		SecretKey: secretKey,
 	})
 }
 
@@ -236,6 +248,7 @@ func (h *Handler) OCRHandlerAsync(c *gin.Context) {
 		c.JSON(400, gin.H{"errorMessage": err.Error()})
 		return
 	}
+	log.Println(jobID)
 
 	// set data in cache
 	h.service.SetDataInCache(payload, clientID.(int), types.OCR_WORK_TYPE, jobID)
@@ -257,7 +270,7 @@ func (h *Handler) ResultHandler(c *gin.Context) {
 	if err != nil {
 		log.Println("Error while fetching job details by job id: ", err)
 		c.JSON(500, gin.H{
-			"errorMessage": "Unexpected server error occurred",
+			"errorMessage": err.Error(),
 		})
 		return
 	}
