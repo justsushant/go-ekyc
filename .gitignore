@@ -1,3 +1,2 @@
-# Allowing .env file for now to facilitate the easier project setup
-# .env  
+.env  
 bin/*

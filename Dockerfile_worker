@@ -8,5 +8,5 @@ RUN go build -o bin/go-ekyc-worker cmd/worker/worker.go
 FROM alpine
 WORKDIR /app
 COPY --from=builder /app/bin/go-ekyc-worker /app/go-ekyc-worker
-COPY --from=builder /app/.env /app/.env
+# COPY --from=builder /app/.env /app/.env
 ENTRYPOINT ["/app/go-ekyc-worker"]

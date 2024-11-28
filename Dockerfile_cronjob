@@ -8,6 +8,5 @@ RUN go build -o bin/go-ekyc-cronjob cmd/cronjob/main.go
 FROM alpine
 WORKDIR /app
 COPY --from=builder /app/bin/go-ekyc-cronjob /app/go-ekyc-cronjob
-COPY --from=builder /app/.env /app/.env
-EXPOSE 8080
+# COPY --from=builder /app/.env /app/.env
 ENTRYPOINT ["/app/go-ekyc-cronjob"]

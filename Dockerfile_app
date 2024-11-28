@@ -8,6 +8,6 @@ RUN go build -o bin/go-ekyc cmd/app/main.go
 FROM alpine
 WORKDIR /app
 COPY --from=builder /app/bin/go-ekyc /app/go-ekyc
-COPY --from=builder /app/.env /app/.env
+# COPY --from=builder /app/.env /app/.env
 EXPOSE 8080
 ENTRYPOINT ["/app/go-ekyc"]

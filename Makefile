@@ -1,7 +1,7 @@
-build:
+build-app:
 	@go build -o bin/go-ekyc cmd/app/main.go
 
-run: build
+run-app: build-app
 	@./bin/go-ekyc
 
 create-migrate:
@@ -21,3 +21,6 @@ cronjob: create-cronjob
 
 test:
 	@go test ./...
+
+run:
+	@docker compose up -d
