@@ -1,0 +1,261 @@
+{
+	"info": {
+		"_postman_id": "940dc94b-9055-4d8e-ab11-53aeafee529c",
+		"name": "go-ekyc",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "40032311"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{host}}/api/v1/health",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"health"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Signup",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"new\",\n    \"email\": \"new.def@ncdm.dv\",\n    \"plan\": \"basic\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/api/v1/signup",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"signup"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "File Upload",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "accessKey",
+						"value": "{{accessKey}}",
+						"type": "text"
+					},
+					{
+						"key": "secretKey",
+						"value": "{{secretKey}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "type",
+							"value": "id_card",
+							"type": "text"
+						},
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/home/sushant/Desktop/sample_image_1.jpeg"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{host}}/api/v1/upload",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"upload"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Face Match Async",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "accessKey",
+						"value": "{{accessKey}}",
+						"type": "text"
+					},
+					{
+						"key": "secretKey",
+						"value": "{{secretKey}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"image1\":\"08f37ad4-6f7a-44a3-8edb-44426f9c57eb\",\n    \"image2\":  \"1b99b692-ae47-4d1f-9491-095209964364\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/api/v1/face-match-async",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"face-match-async"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "OCR Async",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "accessKey",
+						"value": "{{accessKey}}",
+						"type": "text"
+					},
+					{
+						"key": "secretKey",
+						"value": "{{secretKey}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"image\": \"9bf9360e-c13b-444d-aab2-089ea5896cf9\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/api/v1/ocr-async",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"ocr-async"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Result",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "accessKey",
+						"value": "{{accessKey}}",
+						"type": "text"
+					},
+					{
+						"key": "secretKey",
+						"value": "{{secretKey}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{host}}/api/v1/result/ocr/f7fc830e-fd43-491e-bdf6-ed44255960a0",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"result",
+						"ocr",
+						"f7fc830e-fd43-491e-bdf6-ed44255960a0"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "host",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "accessKey",
+			"value": "CdjROPfCKD",
+			"type": "string"
+		},
+		{
+			"key": "secretKey",
+			"value": "YmS6Dq2cAFf1lrAzcCl6",
+			"type": "string"
+		},
+		{
+			"key": "jobType_face",
+			"value": "face_match",
+			"type": "string"
+		},
+		{
+			"key": "jobType_ocr",
+			"value": "ocr",
+			"type": "string"
+		}
+	]
+}

@@ -1,32 +1,68 @@
 # eKYC Exercise
 
-A fully featured REST API for an online KYC (know your customer) system. This will include REST APIs, relational DB, Redis for caching, RabbitMQ as a queue, async workers for processing, etc.
+A fully featured REST API for an online KYC (know your customer) system. This will include REST APIs, relational DB, caching, message broker, async workers and file store. There is also a cronjob which is used to generate reports regarding clients, their usage patterns, costs etc on a daily and monthly basis.
 
+## Tech Stack
 
-## Usage
+- Backend: Golang, Gin Framework
+- Database: PostgreSQL
+- File Store: Minio
+- Message Broker: Rabbitmq
+- Cache: Redis
 
-1. Set the required environment variables in .env file
-2. Run the command below to launch PostgreSQL container
+## Architecture Diagram
+
+![diagram](docs/architecture_diagram.png)
+
+## Features
+
+- Signup the client
+- Upload files
+- Perform operations like, Face Match and OCR
+- Checking results of mentioned operations
+- Daily and Monthly reports
+
+## Running the application
+
+1. Clone the repository:
+
+   `git clone https://github.com/justsushant/go-ekyc`
+
+2. Set the required environment variables in .env file.
+   See .env-example for reference.
+
+3. Run the command below to launch the app and its associated dependencies.
    ```
-   docker compose up
+   make run
    ```
-3. Run the command below to apply the necessary migrations
+4. Run the command below to apply the necessary migrations.
+   Below command forces the latest migration on the database.
    ```
    make create-migrate
-4. Run the command below to build and run the binary:
+   bin/migrate -v 5 -f
    ```
-   make create-migrate && bin/migrate -m=up
-   ```
-5. Connect to the server using any HTTP client 
+5. Connect to the server on host specified in the .env file using any HTTP client
 
-## Current Progress Feat
+## Endpoints
 
-- Health check endpoint working
-- Migrate up implemented successfully
+| Routes                          | Description             |
+| ------------------------------- | ----------------------- |
+| /api/v1/health [GET]            | Health check            |
+| /api/v1/upload [POST]           | File upload             |
+| /api/v1/face-match-async [POST] | Face match operation    |
+| /api/v1/ocr-async [POST]        | OCR operation           |
+| /api/v1/result [GET]            | Result of the operation |
 
+[Download Postman Collection](docs/go-ekyc.postman_collection.json)
 
-# Bugs
-- for invalid access key, im not getting 401
-- in getmetadatfromuuid store function, "sql: no rows in result set" is returned. we need some apt error when no record if found for that particular uuid to show the client. do we even need it, in terms of exposing this detail to the client?
-- send ack after processing
-- how do we restrict the processing of same upload ids for face match and ocr from the db side, since client will be charged for every api call
+## Testing
+
+- Run the below command to run the tests
+
+  `make test`
+
+## Docs
+
+- Visit the below endpoint to see the OpenAPI Swagger Docs
+
+  `/swagger/index.html`
