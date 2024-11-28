@@ -15,7 +15,7 @@ const MIGRATION_FILES_PATH = "file://db/migration"
 
 var (
 	mode    string
-	migVer  int
+	version int
 	isForce bool
 )
 
@@ -30,7 +30,8 @@ func main() {
 
 	// set the flags
 	flag.StringVar(&mode, "m", "", "migrate [up|down|status]")
-	flag.IntVar(&migVer, "v", 0, "which migration version to apply")
+	flag.IntVar(&version, "s", 0, "migration steps to apply")
+	flag.IntVar(&version, "v", 0, "which migration version to apply")
 	flag.BoolVar(&isForce, "f", false, "force migration or not")
 	flag.Parse()
 
@@ -41,37 +42,88 @@ func main() {
 	}
 
 	// acting on the supplied migration mode
-	if mode != "" {
-		switch strings.ToLower(mode) {
-		case "up":
-			err = mig.Up()
+	switch strings.ToLower(mode) {
+	case "up":
+		if version == 0 {
+			err = mig.Steps(1)
 			if err != nil && err.Error() != "no change" {
 				log.Fatalf("Error occured while applying migrations: %v\n", err)
 			}
-			log.Printf("Migrations applied successfully\n")
-		case "down":
-			err = mig.Down()
-			if err != nil && err.Error() != "no change" {
-				log.Fatalf("Error occured while rolling back migrations: %v\n", err)
-			}
-			log.Printf("Rollback applied successfully\n")
-		case "status":
+			log.Printf("Migration applied successfully\n")
 			version, dirty, err := mig.Version()
 			if err != nil {
 				log.Fatalf("Error occured while getting migration status: %v\n", err)
 			}
 			log.Printf("Current version: %d, Dirty: %v\n", version, dirty)
-		default:
-			log.Fatal("Unknown command")
+			return
+		} else {
+			for range version {
+				err = mig.Steps(1)
+				if err != nil && err.Error() != "no change" {
+					log.Fatalf("Error occured while applying migrations: %v\n", err)
+				}
+			}
+			log.Printf("Migration applied successfully\n")
+			version, dirty, err := mig.Version()
+			if err != nil {
+				log.Fatalf("Error occured while getting migration status: %v\n", err)
+			}
+			log.Printf("Current version: %d, Dirty: %v\n", version, dirty)
+			return
 		}
+	case "down":
+		if version == 0 {
+			err = mig.Steps(-1)
+			if err != nil && err.Error() != "no change" {
+				log.Fatalf("Error occured while applying migrations: %v\n", err)
+			}
+			log.Printf("Rollback applied successfully\n")
+			version, dirty, err := mig.Version()
+			if err != nil {
+				log.Fatalf("Error occured while getting migration status: %v\n", err)
+			}
+			log.Printf("Current version: %d, Dirty: %v\n", version, dirty)
+			return
+		} else {
+			for range version {
+				err = mig.Steps(-1)
+				if err != nil && err.Error() != "no change" {
+					log.Fatalf("Error occured while applying migrations: %v\n", err)
+				}
+			}
+			log.Printf("Rollback applied successfully\n")
+			version, dirty, err := mig.Version()
+			if err != nil {
+				log.Fatalf("Error occured while getting migration status: %v\n", err)
+			}
+			log.Printf("Current version: %d, Dirty: %v\n", version, dirty)
+			return
+		}
+	case "status":
+		version, dirty, err := mig.Version()
+		if err != nil {
+			log.Fatalf("Error occured while getting migration status: %v\n", err)
+		}
+		log.Printf("Current version: %d, Dirty: %v\n", version, dirty)
+		return
 	}
 
-	// if specific migration version was passed
-	if migVer != 0 {
-		err := mig.Migrate(uint(migVer))
+	// if specific migration version was passed and force flag was not passed
+	if version != 0 && !isForce {
+		err := mig.Migrate(uint(version))
 		if err != nil {
 			log.Fatalf("Error occured while applying migration: %v", err)
 		}
-		log.Printf("Migration version %d applied successfully\n", migVer)
+		log.Printf("Migration version %d applied successfully\n", version)
 	}
+
+	// if specific migration version & force flag was passed
+	if version != 0 && isForce {
+		err := mig.Force(version)
+		if err != nil {
+			log.Fatalf("Error occured while applying migration: %v", err)
+		}
+		log.Printf("Migration version %d applied successfully\n", version)
+	}
+
 }
