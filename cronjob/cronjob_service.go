@@ -9,7 +9,6 @@ import (
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
 )
 
-// TODO: change the name of interface
 type CronJobServiceManager interface {
 	PrepareCSV(data interface{}) ([]byte, error)
 }
