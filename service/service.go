@@ -1,6 +1,8 @@
 package service
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -412,31 +414,26 @@ func (c Service) GetJobDetailsByJobID(jobID, jobType string) (*types.JobRecord, 
 }
 
 func (c Service) FetchDataFromCache(payload interface{}, clientID int, jobType string) (string, bool) {
+	var cacheKey string
 	switch p := payload.(type) {
 	case types.FaceMatchPayload:
 		key1 := fmt.Sprintf("%s:%d:%s", jobType, clientID, p.Image1)
 		key2 := fmt.Sprintf("%s:%d:%s", jobType, clientID, p.Image2)
-		cacheKey := c.makeHash(key1, key2)
-
-		val := c.getObjFromCache(cacheKey)
-		if val != "" {
-			return val, true
-		}
+		cacheKey = c.makeHash(key1, key2)
 
 		return "", false
 	case types.OCRPayload:
 		key := fmt.Sprintf("%s:%d:%s", jobType, clientID, p.Image)
-		cacheKey := c.makeHash(key)
-
-		val := c.getObjFromCache(cacheKey)
-		if val != "" {
-			return val, true
-		}
+		cacheKey = c.makeHash(key)
 
 		return "", false
 	}
 
 	// TODO: this may cause bugs if switch is unable to match the payload with a type & both falsy values will be returned and handler will send empty string in response to client
+	val := c.getObjFromCache(cacheKey)
+	if val != "" {
+		return val, true
+	}
 	return "", false
 }
 
@@ -459,37 +456,40 @@ func (c Service) setObjInCache(key, val string) {
 func (c Service) SetDataInCache(payload interface{}, clientID int, jobType, jobID string) {
 	switch p := payload.(type) {
 	case types.FaceMatchPayload:
-		cacheKey := c.makeHash(fmt.Sprintf("%s:%d:%s", jobType, clientID, p.Image1), fmt.Sprintf("%s:%d:%s", jobType, clientID, p.Image2))
+		key1 := fmt.Sprintf("%s:%d:%s", jobType, clientID, p.Image1)
+		key2 := fmt.Sprintf("%s:%d:%s", jobType, clientID, p.Image2)
+		cacheKey := c.makeHash(key1, key2)
 		c.setObjInCache(cacheKey, jobID)
 	case types.OCRPayload:
-		cacheKey := c.makeHash(fmt.Sprintf("%s:%d:%s", jobType, clientID, p.Image), fmt.Sprintf("%s:%d:%s", jobType, clientID, p.Image))
+		cacheKey := c.makeHash(fmt.Sprintf("%s:%d:%s", jobType, clientID, p.Image))
 		c.setObjInCache(cacheKey, jobID)
 	}
 }
 
 func (c Service) makeHash(keys ...string) string {
+	// for face match hash
 	if len(keys) == 2 {
 		key1Bytes := []byte(keys[0])
 		key2Bytes := []byte(keys[1])
 
-		// xor them byte by byte
+		// xor op on byte by byte
 		xorBytes := make([]byte, len(key1Bytes))
 		for i := 0; i < len(key1Bytes); i++ {
 			xorBytes[i] = key1Bytes[i] ^ key2Bytes[i]
 		}
 
 		// generate SHA256 hash of the xor result
-		// hash := sha256.Sum256(xorBytes)
-		// return hex.EncodeToString(hash[:])
-		return string(xorBytes)
+		hash := sha256.Sum256(xorBytes)
+		return hex.EncodeToString(hash[:])
 	}
 
+	// for ocr key hash
 	if len(keys) == 1 {
-		return keys[0]
-		// keyBytes := []byte(keys[0])
-		// hash := sha256.Sum256(keyBytes)
-		// return hex.EncodeToString(hash[:])
+		keyBytes := []byte(keys[0])
+		hash := sha256.Sum256(keyBytes)
+		return hex.EncodeToString(hash[:])
 	}
 
+	// default case
 	return keys[0]
 }
