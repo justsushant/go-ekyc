@@ -1,0 +1,21 @@
+name: Makefile CI
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - '**/*.go' 
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - '**/*.go' 
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Unit Test
+      run: make test
