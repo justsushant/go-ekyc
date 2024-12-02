@@ -22,5 +22,8 @@ cronjob: create-cronjob
 test:
 	@go test ./...
 
+lint:
+	@gofmt -l -s .
+
 run:
 	@docker compose up -d
