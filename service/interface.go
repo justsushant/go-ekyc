@@ -7,9 +7,7 @@ import (
 )
 
 type ServiceManager interface {
-	ValidatePayload(payload types.SignupPayload) error
-	GenerateKeyPair() (*KeyPair, error)
-	SaveSignupData(payload types.SignupPayload, keyPair *KeyPair) error
+	SignupClient(payload types.SignupPayload) (*KeyPair, error)
 	ValidateFile(fileName, fileType string) error
 	SaveFile(fileHeader *multipart.FileHeader, uploadMetaData *types.UploadMetaData) error
 	ValidateImage(payload types.FaceMatchPayload, clientID int) error

@@ -23,7 +23,7 @@ type KeyPair struct {
 	secretKeyHash string
 }
 
-func NewKeyPair(accessKey, secretKey, secretKeyHash string) *KeyPair {
+func NewKeyPairTest(accessKey, secretKey, secretKeyHash string) *KeyPair {
 	return &KeyPair{
 		accessKey:     accessKey,
 		secretKey:     secretKey,

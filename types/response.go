@@ -6,7 +6,11 @@ import (
 )
 
 type ErrorResponse struct {
-	ErrorMessage error `json:"errorMessage"`
+	ErrorMessage string `json:"errorMessage"`
+}
+
+type HealthResponse struct {
+	Message string `json:"message"`
 }
 
 type SignupResponse struct {

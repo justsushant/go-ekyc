@@ -39,21 +39,6 @@ func NewService(dataStore store.DataStore, fileStore store.FileStore, keyService
 	}
 }
 
-func (c Service) ValidatePayload(payload types.SignupPayload) error {
-	if err := validateEmail(payload.Email); err != nil {
-		return err
-	}
-	if err := validatePlan(payload.Plan); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (c Service) GenerateKeyPair() (*KeyPair, error) {
-	return c.keyService.GenerateKeyPair()
-}
-
 func (c Service) SaveSignupData(payload types.SignupPayload, keyPair *KeyPair) error {
 	planId, err := c.dataStore.GetPlanIdFromName(payload.Plan)
 	if err != nil {
@@ -69,6 +54,37 @@ func (c Service) SaveSignupData(payload types.SignupPayload, keyPair *KeyPair) e
 	}
 
 	return nil
+}
+
+func (c Service) SignupClient(payload types.SignupPayload) (*KeyPair, error) {
+	// apply validations on payload
+	if err := validateEmail(payload.Email); err != nil {
+		return nil, err
+	}
+	if err := validatePlan(payload.Plan); err != nil {
+		return nil, err
+	}
+
+	// generate keys
+	keyPair, err := c.keyService.GenerateKeyPair()
+	if err != nil {
+		return nil, err
+	}
+
+	// save to db
+	planId, err := c.dataStore.GetPlanIdFromName(payload.Plan)
+	if err != nil {
+		return nil, err
+	}
+	accessKey, _ := keyPair.GetKeysPrivate()
+	secretKeyHash := keyPair.GetSecretKeyHash()
+
+	err = c.dataStore.InsertClientData(planId, payload, accessKey, secretKeyHash)
+	if err != nil {
+		return nil, err
+	}
+
+	return keyPair, nil
 }
 
 func (c Service) ValidateFile(fileName, fileType string) error {

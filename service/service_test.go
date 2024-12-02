@@ -122,6 +122,88 @@ type mockTaskQueue struct{}
 func (tq *mockTaskQueue) PushJobOnQueue(payload []byte) error             { return nil }
 func (tq *mockTaskQueue) PullJobFromQueue() (<-chan amqp.Delivery, error) { return nil, nil }
 
+type mockKeyService struct{}
+
+func (u *mockKeyService) GenerateKeyPair() (*KeyPair, error) {
+	return &KeyPair{
+		accessKey: "testAccess",
+		secretKey: "secretAccess",
+	}, nil
+}
+
+func TestSignupClient(t *testing.T) {
+	tt := []struct {
+		name    string
+		payload types.SignupPayload
+		expErr  error
+		expKey  *KeyPair
+	}{
+		{
+			name: "invalid email",
+			payload: types.SignupPayload{
+				Name:  "abc corp",
+				Email: "test@abc@corp",
+				Plan:  "basic",
+			},
+			expErr: ErrInvalidEmail,
+		},
+		{
+			name: "invalid plan",
+			payload: types.SignupPayload{
+				Name:  "abc corp",
+				Email: "test@abc.corp",
+				Plan:  "invalid-plan",
+			},
+			expErr: ErrInvalidPlan,
+		},
+		{
+			name: "valid client data",
+			payload: types.SignupPayload{
+				Name:  "abc corp",
+				Email: "test@abc.corp",
+				Plan:  "basic",
+			},
+			expKey: &KeyPair{
+				accessKey: "testAccess",
+				secretKey: "secretAccess",
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			service := &Service{
+				dataStore:  &mockDataStore{},
+				keyService: &mockKeyService{},
+			}
+
+			keyPair, err := service.SignupClient(tc.payload)
+			if tc.expErr != nil {
+				if err == nil {
+					t.Errorf("Expected error but didn't got one\n")
+				}
+
+				if !errors.Is(err, tc.expErr) {
+					t.Errorf("Expected error %q but got %q\n", tc.expErr, err)
+				}
+
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("Unexpected error: %q", err.Error())
+			}
+
+			if tc.expKey.accessKey != keyPair.accessKey {
+				t.Errorf("Expected access key to be %q but got %q", tc.expKey.accessKey, keyPair.accessKey)
+			}
+			if tc.expKey.secretKey != keyPair.secretKey {
+				t.Errorf("Expected secret key to be %q but got %q", tc.expKey.secretKey, keyPair.secretKey)
+			}
+		})
+	}
+}
+
 func TestValidateImage(t *testing.T) {
 	tt := []struct {
 		name     string

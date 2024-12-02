@@ -51,24 +51,13 @@ func (h *Handler) SignupHandler(c *gin.Context) {
 	var payload types.SignupPayload
 	err := json.NewDecoder(c.Request.Body).Decode(&payload)
 	if err != nil {
-		c.JSON(400, types.ErrorResponse{ErrorMessage: err})
+		c.JSON(400, types.ErrorResponse{ErrorMessage: err.Error()})
 		return
 	}
 
-	if err := h.service.ValidatePayload(payload); err != nil {
-		c.JSON(400, types.ErrorResponse{ErrorMessage: err})
-		return
-	}
-
-	keyPair, err := h.service.GenerateKeyPair()
+	keyPair, err := h.service.SignupClient(payload)
 	if err != nil {
-		c.JSON(400, types.ErrorResponse{ErrorMessage: err})
-		return
-	}
-
-	err = h.service.SaveSignupData(payload, keyPair)
-	if err != nil {
-		c.JSON(400, types.ErrorResponse{ErrorMessage: err})
+		c.JSON(400, types.ErrorResponse{ErrorMessage: err.Error()})
 		return
 	}
 
@@ -228,7 +217,6 @@ func (h *Handler) OCRHandlerAsync(c *gin.Context) {
 		return
 	}
 
-	// generating UUID for file name
 	clientID, ok := c.Get("client_id")
 	if !ok {
 		// TODO: what to do when ok is false, or clientID is nil

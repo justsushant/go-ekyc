@@ -19,22 +19,14 @@ import (
 // mock of client service for usage in tests
 type mockService struct{}
 
-func (m mockService) ValidatePayload(payload types.SignupPayload) error {
+func (m mockService) SignupClient(payload types.SignupPayload) (*service.KeyPair, error) {
 	if payload.Email == "test@abc@corp" {
-		return service.ErrInvalidEmail
+		return nil, service.ErrInvalidEmail
 	} else if payload.Plan == "invalid-plan" {
-		return service.ErrInvalidPlan
+		return nil, service.ErrInvalidPlan
 	} else {
-		return nil
+		return service.NewKeyPairTest("qwerty", "quirkyfox", ""), nil
 	}
-}
-
-func (m mockService) GenerateKeyPair() (*service.KeyPair, error) {
-	return service.NewKeyPair("qwerty", "quirkyfox", ""), nil
-}
-
-func (m mockService) SaveSignupData(payload types.SignupPayload, keyPair *service.KeyPair) error {
-	return nil
 }
 
 func (m mockService) ValidateFile(fileName, fileType string) error {
@@ -129,7 +121,7 @@ func (m mockService) GetJobDetailsByJobID(jobID, jobType string) (*types.JobReco
 		}, nil
 	}
 
-	if jobType == "ocr" && jobID == "zxcvb" {
+	if jobType == "ocr" && jobID == "jobID1" {
 		return &types.JobRecord{
 			ClientID:    1,
 			Status:      types.JOB_STATUS_PROCESSING,
@@ -137,7 +129,7 @@ func (m mockService) GetJobDetailsByJobID(jobID, jobType string) (*types.JobReco
 		}, nil
 	}
 
-	if jobType == "ocr" && jobID == "zxcvba" {
+	if jobType == "ocr" && jobID == "jobID2" {
 		return &types.JobRecord{
 			ClientID:  1,
 			Status:    types.JOB_STATUS_CREATED,
@@ -146,7 +138,7 @@ func (m mockService) GetJobDetailsByJobID(jobID, jobType string) (*types.JobReco
 		}, nil
 	}
 
-	if jobType == "ocr" && jobID == "zgcvba" {
+	if jobType == "ocr" && jobID == "jobID3" {
 		return &types.JobRecord{
 			ClientID:     1,
 			Status:       types.JOB_STATUS_FAILED,
@@ -156,7 +148,7 @@ func (m mockService) GetJobDetailsByJobID(jobID, jobType string) (*types.JobReco
 		}, nil
 	}
 
-	if jobType == "face_match" && jobID == "mnlkpo" {
+	if jobType == "face_match" && jobID == "jobID4" {
 		return &types.JobRecord{
 			ClientID:    1,
 			Status:      types.JOB_STATUS_COMPLETED,
@@ -166,7 +158,7 @@ func (m mockService) GetJobDetailsByJobID(jobID, jobType string) (*types.JobReco
 		}, nil
 	}
 
-	if jobType == "ocr" && jobID == "mnlkpo" {
+	if jobType == "ocr" && jobID == "jobID5" {
 		return &types.JobRecord{
 			ClientID:    1,
 			Status:      types.JOB_STATUS_COMPLETED,
@@ -192,7 +184,7 @@ func TestSignupHandler(t *testing.T) {
 		name          string
 		payload       types.SignupPayload
 		expStatusCode int
-		expResponse   string
+		expResponse   interface{}
 	}{
 		{
 			name: "invalid email case",
@@ -202,7 +194,7 @@ func TestSignupHandler(t *testing.T) {
 				Plan:  "basic",
 			},
 			expStatusCode: http.StatusBadRequest,
-			expResponse:   `{"errorMessage":"invalid email"}`,
+			expResponse:   types.ErrorResponse{ErrorMessage: service.ErrInvalidEmail.Error()},
 		},
 		{
 			name: "invalid plan case",
@@ -212,7 +204,7 @@ func TestSignupHandler(t *testing.T) {
 				Plan:  "invalid-plan",
 			},
 			expStatusCode: http.StatusBadRequest,
-			expResponse:   `{"errorMessage":"invalid plan, supported plans are basic, advanced, or enterprise"}`,
+			expResponse:   types.ErrorResponse{ErrorMessage: service.ErrInvalidPlan.Error()},
 		},
 		{
 			name: "valid case",
@@ -222,12 +214,17 @@ func TestSignupHandler(t *testing.T) {
 				Plan:  "basic",
 			},
 			expStatusCode: http.StatusOK,
-			expResponse:   `{"accessKey":"qwerty", "secretKey":"quirkyfox"}`,
+			expResponse: types.SignupResponse{
+				AccessKey: "qwerty",
+				SecretKey: "quirkyfox",
+			},
 		},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
+			gin.SetMode(gin.TestMode)
+
 			// marhalling the payload into json
 			body, err := json.Marshal(tc.payload)
 			if err != nil {
@@ -246,10 +243,115 @@ func TestSignupHandler(t *testing.T) {
 
 			// asserting the values
 			assert.Equal(t, tc.expStatusCode, w.Code)
-			assert.JSONEq(t, tc.expResponse, w.Body.String())
+
+			switch tc.expResponse.(type) {
+			case types.ErrorResponse:
+				var actualResp types.ErrorResponse
+				err := json.Unmarshal(w.Body.Bytes(), &actualResp)
+				if err != nil {
+					t.Errorf("Error while unmarshalling response: %v", err)
+				}
+				assert.Equal(t, tc.expResponse, actualResp)
+			case types.SignupResponse:
+				var actualResp types.SignupResponse
+				err := json.Unmarshal(w.Body.Bytes(), &actualResp)
+				if err != nil {
+					t.Errorf("Error while unmarshalling response: %v", err)
+				}
+				assert.Equal(t, tc.expResponse, actualResp)
+			default:
+				t.Errorf("Unknown response type: %v", w.Body.String())
+			}
 		})
 	}
 }
+
+// func TestSignupHandler(t *testing.T) {
+// 	tt := []struct {
+// 		name          string
+// 		payload       types.SignupPayload
+// 		expStatusCode int
+// 		expResponse   interface{}
+// 	}{
+// 		{
+// 			name: "invalid email case",
+// 			payload: types.SignupPayload{
+// 				Name:  "abc corp",
+// 				Email: "test@abc@corp",
+// 				Plan:  "basic",
+// 			},
+// 			expStatusCode: http.StatusBadRequest,
+// 			expResponse:   types.ErrorResponse{ErrorMessage: service.ErrInvalidEmail.Error()},
+// 		},
+// 		{
+// 			name: "invalid plan case",
+// 			payload: types.SignupPayload{
+// 				Name:  "abc corp",
+// 				Email: "test@abc.corp",
+// 				Plan:  "invalid-plan",
+// 			},
+// 			expStatusCode: http.StatusBadRequest,
+// 			expResponse:   types.ErrorResponse{ErrorMessage: service.ErrInvalidPlan.Error()},
+// 		},
+// 		{
+// 			name: "valid case",
+// 			payload: types.SignupPayload{
+// 				Name:  "abc corp",
+// 				Email: "test@abc.corp",
+// 				Plan:  "basic",
+// 			},
+// 			expStatusCode: http.StatusOK,
+// 			expResponse: types.SignupResponse{
+// 				AccessKey: "qwerty",
+// 				SecretKey: "quirkyfox",
+// 			},
+// 		},
+// 	}
+
+// 	for _, tc := range tt {
+// 		t.Run(tc.name, func(t *testing.T) {
+// 			gin.SetMode(gin.TestMode)
+
+// 			// marhalling the payload into json
+// 			body, err := json.Marshal(tc.payload)
+// 			if err != nil {
+// 				t.Fatalf("Error while marshalling payload: %v", err)
+// 			}
+
+// 			// preparing the test
+// 			w := httptest.NewRecorder()
+// 			c, _ := gin.CreateTestContext(w)
+// 			c.Request = httptest.NewRequest("POST", "/signup", bytes.NewBuffer([]byte(body)))
+// 			c.Request.Header.Set("Content-Type", "application/json")
+
+// 			// calling the signup handler
+// 			handler := NewHandler(&mockService{})
+// 			handler.SignupHandler(c)
+
+// 			// asserting the values
+// 			assert.Equal(t, tc.expStatusCode, w.Code)
+
+// 			switch tc.expResponse.(type) {
+// 			case types.ErrorResponse:
+// 				var actualResp types.ErrorResponse
+// 				err := json.Unmarshal(w.Body.Bytes(), &actualResp)
+// 				if err != nil {
+// 					t.Errorf("Error while unmarshalling response: %v", err)
+// 				}
+// 				assert.Equal(t, tc.expResponse, actualResp)
+// 			case types.SignupResponse:
+// 				var actualResp types.SignupResponse
+// 				err := json.Unmarshal(w.Body.Bytes(), &actualResp)
+// 				if err != nil {
+// 					t.Errorf("Error while unmarshalling response: %v", err)
+// 				}
+// 				assert.Equal(t, tc.expResponse, actualResp)
+// 			default:
+// 				t.Errorf("Unknown response type: %v", w.Body.String())
+// 			}
+// 		})
+// 	}
+// }
 
 func TestFileUploadHandler(t *testing.T) {
 	tt := []struct {
@@ -600,7 +702,7 @@ func TestResultHandler(t *testing.T) {
 		{
 			name:          "job is still processing",
 			jobType:       "ocr",
-			jobID:         "zxcvb",
+			jobID:         "jobID1",
 			clientID:      1,
 			expStatusCode: 200,
 			expResponse:   `{ "status": "processing", "processed_at": "timestamp", "message": "job is still running"}`,
@@ -608,7 +710,7 @@ func TestResultHandler(t *testing.T) {
 		{
 			name:          "job is created",
 			jobType:       "ocr",
-			jobID:         "zxcvba",
+			jobID:         "jobID2",
 			clientID:      1,
 			expStatusCode: 200,
 			expResponse:   `{ "status": "created", "created_at": "timestamp", "message": "job is created"}`,
@@ -616,7 +718,7 @@ func TestResultHandler(t *testing.T) {
 		{
 			name:          "job is failed",
 			jobType:       "ocr",
-			jobID:         "zgcvba",
+			jobID:         "jobID3",
 			clientID:      1,
 			expStatusCode: 200,
 			expResponse:   `{ "status": "failed", "failed_at": "timestamp", "message": "job is failed", "failed_reason": "reason"}`,
@@ -624,7 +726,7 @@ func TestResultHandler(t *testing.T) {
 		{
 			name:          "job is completed face_match",
 			jobType:       "face_match",
-			jobID:         "mnlkpo",
+			jobID:         "jobID4",
 			clientID:      1,
 			expStatusCode: 200,
 			expResponse:   `{ "status": "completed", "completed_at": "timestamp", "message": "job is completed", "result": 72}`,
@@ -632,7 +734,7 @@ func TestResultHandler(t *testing.T) {
 		{
 			name:          "job is completed ocr",
 			jobType:       "ocr",
-			jobID:         "mnlkpo",
+			jobID:         "jobID5",
 			clientID:      1,
 			expStatusCode: 200,
 			expResponse:   `{"completed_at": "timestamp", "message": "job is completed", "result": {"name":"xyz","gender":"xyz","dateOfBirth":"xyz","idNumber":"xyz","addressLine1":"xyz","addressLine2":"xyz","pincode":"xyz"}, "status": "completed"}`,
