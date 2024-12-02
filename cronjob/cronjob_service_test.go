@@ -35,7 +35,7 @@ func TestPrepareCSV(t *testing.T) {
 					TotalStorageCost:  "10",
 				},
 			},
-			expResp: "client_id,name,plan,date,total_face_match_for_day,total_ocr_for_da,total_image_storage_in_mb,api_usage_cost_usd,storage_cost_usd\n1,client1,basic,2024-11-22,5,2,10,12,10\n",
+			expResp: "client_id,name,plan,date,total_face_match_for_day,total_ocr_for_day,total_image_storage_in_mb,api_usage_cost_usd,storage_cost_usd\n1,client1,basic,2024-11-22,5,2,10,12,10\n",
 			expErr:  nil,
 		},
 		{
@@ -64,7 +64,7 @@ func TestPrepareCSV(t *testing.T) {
 					TotalStorageCost:  "12",
 				},
 			},
-			expResp: "client_id,name,plan,date,total_face_match_for_day,total_ocr_for_da,total_image_storage_in_mb,api_usage_cost_usd,storage_cost_usd\n1,client1,basic,2024-11-22,5,2,10,12,10\n2,client2,basic,2024-11-22,7,4,12,14,12\n",
+			expResp: "client_id,name,plan,date,total_face_match_for_day,total_ocr_for_day,total_image_storage_in_mb,api_usage_cost_usd,storage_cost_usd\n1,client1,basic,2024-11-22,5,2,10,12,10\n2,client2,basic,2024-11-22,7,4,12,14,12\n",
 			expErr:  nil,
 		},
 	}
@@ -126,7 +126,7 @@ func TestPrepareCSVForMonthlyReport(t *testing.T) {
 					TotalStorageCost:  "12",
 				},
 			},
-			expResp: "client_id,date,total_face_match_for_day,total_ocr_for_da,total_image_storage_in_mb,api_usage_cost_usd,storage_cost_usd\n1,2024-11-22,5,2,10,12,10\n1,2024-11-23,7,4,12,14,12\n",
+			expResp: "client_id,date,total_face_match_for_day,total_ocr_for_day,total_image_storage_in_mb,api_usage_cost_usd,storage_cost_usd\n1,2024-11-22,5,2,10,12,10\n1,2024-11-23,7,4,12,14,12\n",
 			expErr:  nil,
 		},
 		{
@@ -142,7 +142,7 @@ func TestPrepareCSVForMonthlyReport(t *testing.T) {
 					TotalStorageCost:  "10",
 				},
 			},
-			expResp: "client_id,date,total_face_match_for_day,total_ocr_for_da,total_image_storage_in_mb,api_usage_cost_usd,storage_cost_usd\n1,2024-11-22,5,2,10,12,10\n",
+			expResp: "client_id,date,total_face_match_for_day,total_ocr_for_day,total_image_storage_in_mb,api_usage_cost_usd,storage_cost_usd\n1,2024-11-22,5,2,10,12,10\n",
 			expErr:  nil,
 		},
 		{
