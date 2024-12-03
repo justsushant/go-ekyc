@@ -1,4 +1,3 @@
-
 services:
   database:
     image: postgres:latest
@@ -8,9 +7,14 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: ekyc_db
     ports:
-      - 5432:5432
+      - "5432:5432"
     volumes:
       - psql_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
 
   minio:
     image: minio/minio:latest
@@ -24,7 +28,12 @@ services:
       - "9001:9001"      
     command: server /data --console-address ":9001"
     volumes:
-      - minio_data:/data 
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   rabbitmq:
     image: rabbitmq:3.11-management
@@ -37,6 +46,11 @@ services:
       RABBITMQ_DEFAULT_PASS: guest
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:latest
@@ -46,6 +60,11 @@ services:
     command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
   app:
     build:
@@ -56,12 +75,16 @@ services:
     ports:
       - "8080:8080"
     env_file:
-      - .env
+      - ${ENV_FILE}
     depends_on:
-      - database
-      - minio 
-      - rabbitmq
-      - redis
+      database:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   worker:
     build:
@@ -70,12 +93,16 @@ services:
     container_name: go-ekyc-worker
     restart: always
     env_file:
-      - .env
+      - ${ENV_FILE}
     depends_on:
-      - database
-      - minio 
-      - rabbitmq
-      - redis
+      database:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   cronjob:
     build:
@@ -84,14 +111,15 @@ services:
     container_name: go-ekyc-cronjob
     restart: always
     env_file:
-      - .env
+      - ${ENV_FILE}
     depends_on:
-      - database
-      - minio 
+      database:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
 
 volumes:
   psql_data:
   minio_data:
   redis_data:
   rabbitmq_data:
-  

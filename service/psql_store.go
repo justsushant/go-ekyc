@@ -13,8 +13,8 @@ type PsqlStore struct {
 	db *sql.DB
 }
 
-func NewPsqlStore(dsn string) PsqlStore {
-	psqlClient := db.NewPsqlClient(dsn)
+func NewPsqlStore(conn *db.PostgresConn) PsqlStore {
+	psqlClient := db.NewPsqlClient(conn)
 	return PsqlStore{
 		db: psqlClient,
 	}
@@ -317,4 +317,3 @@ func parseStringValue(dnString sql.NullString) string {
 		return "NULL"
 	}
 }
-

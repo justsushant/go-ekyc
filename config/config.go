@@ -28,7 +28,7 @@ type Config struct {
 
 func Init() (*Config, error) {
 	// load the env file
-	// err := godotenv.Load()
+	// err := godotenv.Load(".docker-compose.env")
 	// if err != nil {
 	// 	return nil, err
 	// }

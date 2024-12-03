@@ -2,24 +2,44 @@ name: Makefile CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: 
+      - '**'
     paths:
-      - '**/*.go' 
+      - '**'
   pull_request:
-    branches: [ "main" ]
+    branches: 
+      - '**'
     paths:
-      - '**/*.go' 
+      - '**'
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      ENV_FILE: .docker-compose.env
+      POSTGRES_USER: ${{secrets.POSTGRES_USER}}
+      POSTGRES_PASSWORD: ${{secrets.POSTGRES_PASSWORD}}
+      MINIO_USER: ${{secrets.MINIO_USER}}
+      MINIO_PASSWORD: ${{secrets.MINIO_PASSWORD}}
+
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v4 
+
+    - name: Build App
+      run: make build-app
+
+    - name: Build Migrate
+      run: make build-migrate
+    
+    - name: Build Cronjob
+      run: make build-cronjob
+
+    - name: Build Worker
+      run: make build-worker
 
     - name: Lint
       run: make lint
 
     - name: Unit Test
-      run: make test
-
+      run: make test-unit
