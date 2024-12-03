@@ -236,7 +236,6 @@ func (h *Handler) OCRHandlerAsync(c *gin.Context) {
 		c.JSON(400, gin.H{"errorMessage": err.Error()})
 		return
 	}
-	log.Println(jobID)
 
 	// set data in cache
 	h.service.SetDataInCache(payload, clientID.(int), types.OCR_WORK_TYPE, jobID)

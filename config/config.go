@@ -4,7 +4,6 @@ import (
 	"log"
 
 	"github.com/caarlos0/env/v11"
-	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -24,14 +23,14 @@ type Config struct {
 
 func Init() (*Config, error) {
 	// load the env file
-	err := godotenv.Load()
-	if err != nil {
-		return nil, err
-	}
+	// err := godotenv.Load()
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	// parse the env file
 	var cfg Config
-	err = env.Parse(&cfg)
+	err := env.Parse(&cfg)
 	if err != nil {
 		log.Println(err)
 		return nil, err

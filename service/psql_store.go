@@ -217,6 +217,7 @@ func (s PsqlStore) GetFaceMatchByJobID(jobID string) (*types.JobRecord, error) {
 	var faceMatchData types.JobRecord
 	var completedAt, processedAt, failedAt sql.NullTime
 	var failedReason sql.NullString
+	var matchScore sql.NullInt32
 	err := s.db.QueryRow(
 		"SELECT id, client_id, created_at, job_id, status, completed_at, processed_at, failed_at, failed_reason, match_score FROM face_match WHERE job_id = $1",
 		jobID,
@@ -230,7 +231,7 @@ func (s PsqlStore) GetFaceMatchByJobID(jobID string) (*types.JobRecord, error) {
 		&processedAt,
 		&failedAt,
 		&failedReason,
-		&faceMatchData.MatchScore,
+		&matchScore,
 	)
 	if err != nil {
 		return nil, err
@@ -241,6 +242,9 @@ func (s PsqlStore) GetFaceMatchByJobID(jobID string) (*types.JobRecord, error) {
 	faceMatchData.ProcessedAt = parseTimeValue(processedAt)
 	faceMatchData.FailedAt = parseTimeValue(failedAt)
 	faceMatchData.FailedReason = parseStringValue(failedReason)
+	if matchScore.Valid {
+		faceMatchData.MatchScore = types.FaceMatchResponse(matchScore.Int32)
+	}
 
 	// setting the type of job
 	faceMatchData.Type = types.FACE_MATCH_WORK_TYPE
@@ -251,7 +255,7 @@ func (s PsqlStore) GetOCRByJobID(jobID string) (*types.JobRecord, error) {
 	var ocrData types.JobRecord
 	var completedAt, processedAt, failedAt sql.NullTime
 	var failedReason sql.NullString
-	var rawOCRDetails json.RawMessage
+	var rawOCRDetails *json.RawMessage
 	err := s.db.QueryRow(
 		"SELECT id, client_id, created_at, job_id, status, completed_at, processed_at, failed_at, failed_reason, details FROM ocr WHERE job_id = $1",
 		jobID,
@@ -280,10 +284,20 @@ func (s PsqlStore) GetOCRByJobID(jobID string) (*types.JobRecord, error) {
 	ocrData.FailedAt = parseTimeValue(failedAt)
 	ocrData.FailedReason = parseStringValue(failedReason)
 
-	// need to unmarshal the raw details saved in jsonb
-	if err := json.Unmarshal(rawOCRDetails, &ocrData.OCRDetails); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal ocr details: %v", err)
+	// Check if rawOCRDetails is not nil before unmarshaling
+	if rawOCRDetails != nil {
+		if err := json.Unmarshal(*rawOCRDetails, &ocrData.OCRDetails); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal ocr details: %v", err)
+		}
+	} else {
+		// Initialize with default value if rawOCRDetails is nil
+		ocrData.OCRDetails = types.OCRResponse{} // Adjust as needed
 	}
+
+	// // need to unmarshal the raw details saved in jsonb
+	// if err := json.Unmarshal(*rawOCRDetails, &ocrData.OCRDetails); err != nil {
+	// 	return nil, fmt.Errorf("failed to unmarshal ocr details: %v", err)
+	// }
 
 	return &ocrData, nil
 }
@@ -303,3 +317,4 @@ func parseStringValue(dnString sql.NullString) string {
 		return "NULL"
 	}
 }
+

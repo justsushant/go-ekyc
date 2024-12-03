@@ -436,13 +436,9 @@ func (c Service) FetchDataFromCache(payload interface{}, clientID int, jobType s
 		key1 := fmt.Sprintf("%s:%d:%s", jobType, clientID, p.Image1)
 		key2 := fmt.Sprintf("%s:%d:%s", jobType, clientID, p.Image2)
 		cacheKey = c.makeHash(key1, key2)
-
-		return "", false
 	case types.OCRPayload:
 		key := fmt.Sprintf("%s:%d:%s", jobType, clientID, p.Image)
 		cacheKey = c.makeHash(key)
-
-		return "", false
 	}
 
 	// TODO: this may cause bugs if switch is unable to match the payload with a type & both falsy values will be returned and handler will send empty string in response to client
