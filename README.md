@@ -23,7 +23,7 @@ A fully featured REST API for an online KYC (Know Your Customer) system. This in
 
 ## ERD Diagram
 
-![ERD Diagram](docs/erd_diagram.png)
+![ERD Diagram](docs/er_diagram.png)
 
 ---
 
