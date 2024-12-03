@@ -10,6 +10,11 @@ type Config struct {
 	Host              string `env:"HOST"`
 	Port              string `env:"PORT,required"`
 	DbDsn             string `env:"DB_DSN,required"`
+	PostgresUser      string `env:"POSTGRES_USER,required"`
+	PostgresPassword  string `env:"POSTGRES_PASSWORD,required"`
+	PostgresEndpoint  string `env:"POSTGRES_ENDPOINT,required"`
+	PostgresSSL       string `env:"POSTGRES_SSL,required"`
+	PostgresDB        string `env:"POSTGRES_DB,required"`
 	HashPassword      string `env:"HASH_PASSWORD,required"`
 	MinioUser         string `env:"MINIO_USER,required"`
 	MinioPassword     string `env:"MINIO_PASSWORD,required"`

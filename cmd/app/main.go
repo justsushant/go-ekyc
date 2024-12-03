@@ -21,7 +21,14 @@ func main() {
 	}
 
 	// get psql store
-	psqlStore := service.NewPsqlStore(cfg.DbDsn)
+	psqlConn := &db.PostgresConn{
+		Endpoint: cfg.PostgresEndpoint,
+		User:     cfg.PostgresUser,
+		Password: cfg.PostgresPassword,
+		Ssl:      cfg.PostgresSSL,
+		Db:       cfg.PostgresDB,
+	}
+	psqlStore := service.NewPsqlStore(psqlConn)
 
 	// get minio store
 	minioConn := &db.MinioConn{

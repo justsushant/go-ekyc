@@ -11,8 +11,8 @@ type PsqlWorkerStore struct {
 	db *sql.DB
 }
 
-func NewPsqlWorkerStore(dsn string) PsqlWorkerStore {
-	psqlClient := db.NewPsqlClient(dsn)
+func NewPsqlWorkerStore(conn *db.PostgresConn) PsqlWorkerStore {
+	psqlClient := db.NewPsqlClient(conn)
 	return PsqlWorkerStore{
 		db: psqlClient,
 	}
