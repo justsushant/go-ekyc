@@ -18,6 +18,25 @@ type SignupResponse struct {
 	SecretKey string `json:"secretKey"`
 }
 
+type IDResponse struct {
+	Id string `name:"id"`
+}
+
+type FileUploadResponse IDResponse
+type OCRAsyncResponse IDResponse
+type FaceMatchAsyncResponse IDResponse
+
+type ResultResponse struct {
+	Status       string      `json:"status"`
+	Message      string      `json:"message"`
+	CreatedAt    string      `json:"created_at"`
+	ProcessedAt  string      `json:"processed_at"`
+	CompletedAt  string      `json:"completed_at"`
+	FailedAt     string      `json:"failed_at"`
+	FailedReason string      `json:"failed_reason"`
+	Result       OCRResponse `json:"result"`
+}
+
 type FaceMatchResponse int
 
 type OCRResponseRaw json.RawMessage

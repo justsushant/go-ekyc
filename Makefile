@@ -26,4 +26,7 @@ lint:
 	@gofmt -l -s .
 
 run:
-	@docker compose up -d
+	@ENV_FILE=.docker-compose.env docker compose up
+
+test-integration:
+	@go test -v ./test 

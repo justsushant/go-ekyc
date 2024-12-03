@@ -35,3 +35,7 @@ type OCRQueuePayload struct {
 	Type WorkType `json:"type"`
 	Msg  OCRInternalPayload
 }
+
+type ResultPayload struct {
+	ID string `json:"id"`
+}
