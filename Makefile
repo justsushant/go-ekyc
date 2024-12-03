@@ -26,13 +26,16 @@ lint:
 	@gofmt -l -s .
 
 run:
-	@ENV_FILE=.docker-compose.env docker compose up --build
+	@ENV_FILE=.docker-compose.env docker compose up
 
 test-integration:
-	@go test -v ./test 
+	@go test -v ./test/integration
 
 load-test-face:
 	@artillery run test/load/load_test_face_match.yml --output testdata/result_face_match.json
 
 load-test-ocr:
 	@artillery run test/load/load_test_ocr.yml --output testdata/result_ocr.json
+
+test-coverage:
+	@go test -coverprofile=testdata/coverage.out ./... && go tool cover -func=testdata/coverage.out
