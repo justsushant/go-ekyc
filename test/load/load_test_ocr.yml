@@ -1,0 +1,66 @@
+config:
+  target: 'http://localhost:8080/api/v1'
+  plugins:
+    fake-data: {}
+  phases:
+    - name: "test"
+      duration: 45
+      arrivalRate: 10
+      rampTo: 5000
+      maxVusers: 120
+
+scenarios:
+  - name: "OCR Async end to end flow"
+    flow:
+      - post:
+          url: "/signup"
+          headers:
+            Content-Type: application/json
+          json:
+            name: "{{ $randFullName() }}"
+            email: "{{ $randEmail() }}"
+            plan: "basic"
+          capture:
+            - json: "$.accessKey"
+              as: accessKey
+            - json: "$.secretKey"
+              as: secretKey
+      # - log: "Captured AccessKey: {{ accessKey }}, SecretKey: {{ secretKey }}"
+      - post:
+          url: "/upload"
+          headers:
+            accessKey: "{{accessKey}}"
+            secretKey: "{{secretKey}}"
+            ContentType: "multipart/form-data"
+          formData:
+            type: "id_card"
+            file:
+              fromFile: '../../testdata/sample_image_1.jpeg'
+              type: "image/jpeg"
+              contentType: "multipart/form-data"
+          capture:
+            - json: "$.id"
+              as: idCardImgID
+      # - log: "Captured Upload File Image ID: {{ idCardImgID }}"
+      - post:
+          url: "/ocr-async"
+          headers:
+            Content-Type: application/json
+            accessKey: "{{accessKey}}"
+            secretKey: "{{secretKey}}"
+          json:
+            image: "{{ idCardImgID }}"
+          capture:
+            - json: "$.id"
+              as: ocrJobID
+      # - log: "Captured OCR JobID: {{ ocrJobID }}"
+      - get:
+          url: "/result/ocr/{{ ocrJobID }}"
+          headers:
+            Content-Type: application/json
+            accessKey: "{{accessKey}}"
+            secretKey: "{{secretKey}}"
+          capture:
+            - json: "$.status"
+              as: status
+      # - log: "Result response, status: {{ status }}"

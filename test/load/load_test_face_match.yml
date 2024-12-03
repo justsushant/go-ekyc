@@ -1,0 +1,83 @@
+config:
+  target: 'http://localhost:8080/api/v1'
+  plugins:
+    fake-data: {}
+  phases:
+    - name: "test"
+      duration: 45
+      arrivalRate: 10
+      rampTo: 5000
+      maxVusers: 120
+
+scenarios:
+  - name: "Face Match Async end to end flow"
+    flow:
+      - post:
+          url: "/signup"
+          headers:
+            Content-Type: application/json
+          json:
+            name: "{{ $randFullName() }}"
+            email: "{{ $randEmail() }}"
+            plan: "basic"
+          capture:
+            - json: "$.accessKey"
+              as: accessKey
+            - json: "$.secretKey"
+              as: secretKey
+      # - log: "Captured AccessKey: {{ accessKey }}, SecretKey: {{ secretKey }}"
+      - post:
+            url: "/upload"
+            headers:
+              accessKey: "{{accessKey}}"
+              secretKey: "{{secretKey}}"
+              ContentType: "multipart/form-data"
+            formData:
+              type: "face"
+              file:
+                fromFile: '../../testdata/sample_image_1.jpeg'
+                type: "image/jpeg"
+                contentType: "multipart/form-data"
+            capture:
+              - json: "$.id"
+                as: faceMatchImgID1
+      # - log: "Captured Upload File Image ID1: {{ faceMatchImgID1 }}"
+      - post:
+          url: "/upload"
+          headers:
+            accessKey: "{{accessKey}}"
+            secretKey: "{{secretKey}}"
+            ContentType: "multipart/form-data"
+          formData:
+            type: "face"
+            file:
+              fromFile: '../../testdata/sample_image_1.jpeg'
+              type: "image/jpeg"
+              contentType: "multipart/form-data"
+          capture:
+            - json: "$.id"
+              as: faceMatchImgID2
+      # - log: "Captured Upload File Image ID2: {{ faceMatchImgID2 }}"
+      - post:
+          url: "/face-match-async"
+          headers:
+            Content-Type: application/json
+            accessKey: "{{accessKey}}"
+            secretKey: "{{secretKey}}"
+          json:
+            image1: "{{ faceMatchImgID1 }}"
+            image2: "{{ faceMatchImgID2 }}"
+          capture:
+            - json: "$.id"
+              as: faceMatchJobID
+      # - log: "Captured Face Match JobID: {{ faceMatchJobID }}"
+      - get:
+          url: "/result/face_match/{{ faceMatchJobID }}"
+          headers:
+            Content-Type: application/json
+            accessKey: "{{accessKey}}"
+            secretKey: "{{secretKey}}"
+          capture:
+            - json: "$.status"
+              as: status
+      # - log: "Result response, status: {{ status }}"
