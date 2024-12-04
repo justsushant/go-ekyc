@@ -65,7 +65,7 @@ jobs:
         context: .
         file: Dockerfile_app
         push: true
-        tags: go-ekyc/app:${{DOCKER_IMAGE_TAG}}
+        tags: justsushant/go-ekyc:app-${{ env.DOCKER_IMAGE_TAG }}
 
     - name: Build and push
       uses: docker/build-push-action@v6
@@ -73,7 +73,7 @@ jobs:
         context: .
         file: Dockerfile_cronjob
         push: true
-        tags: go-ekyc/cronjob:${{DOCKER_IMAGE_TAG}}
+        tags: justsushant/go-ekyc:cronjob-${{ env.DOCKER_IMAGE_TAG }}
 
     - name: Build and push
       uses: docker/build-push-action@v6
@@ -81,4 +81,4 @@ jobs:
         context: .
         file: Dockerfile_worker
         push: true
-        tags: go-ekyc/worker:${{DOCKER_IMAGE_TAG}}
+        tags: justsushant/go-ekyc:worker-${{ env.DOCKER_IMAGE_TAG }}
