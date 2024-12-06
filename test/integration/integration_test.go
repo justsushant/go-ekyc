@@ -2,6 +2,7 @@ package test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,12 +11,18 @@ import (
 	"os"
 	"reflect"
 	"testing"
+	"time"
 
+	"github.com/docker/docker/api/types/container"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/exec"
+	"github.com/testcontainers/testcontainers-go/network"
+	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 var (
-	Host                   = "http://localhost:8080"
+	Host                   = "http://127.0.0.1:8080"
 	AccessKey              string
 	SecretKey              string
 	OCRFileUploadID        string
@@ -27,6 +34,8 @@ var (
 
 // TODO: Setup proper integration test in docker containers which can be destri=oyed upon usage
 func TestIntegrationMain(t *testing.T) {
+	setupTest(t)
+	time.Sleep(20 * time.Second)
 	t.Run("Test health check endpoint", func(t *testing.T) {
 		// arrange
 		var expResp = types.HealthResponse{
@@ -94,7 +103,6 @@ func TestIntegrationMain(t *testing.T) {
 		AccessKey = respBody.AccessKey
 		SecretKey = respBody.SecretKey
 	})
-
 	// simulates the following scenario:
 	// - upload image
 	// - creates the ocr async operation
@@ -110,8 +118,454 @@ func TestIntegrationMain(t *testing.T) {
 	// tests the cache
 	// checks if we get same jobID for same upload ids
 	testCache(t)
-
 }
+
+func setupTest(t *testing.T) func() {
+	t.Helper()
+
+	// Set environment variables
+	envVars := map[string]string{
+		"HOST":                "",
+		"PORT":                "8080",
+		"DB_DSN":              "postgres://postgres:password@database:5432/ekyc_db?sslmode=disable",
+		"POSTGRES_USER":       "postgres",
+		"POSTGRES_PASSWORD":   "password",
+		"POSTGRES_ENDPOINT":   "database:5432",
+		"POSTGRES_SSL":        "sslmode=disable",
+		"POSTGRES_DB":         "ekyc_db",
+		"HASH_PASSWORD":       "powerrangersspd",
+		"MINIO_USER":          "minioadmin",
+		"MINIO_PASSWORD":      "minioadmin123",
+		"MINIO_ENDPOINT":      "minio:9000",
+		"MINIO_SSL":           "false",
+		"MINIO_BUCKET_NAME":   "ekyc",
+		"REDIS_DSN":           "redis:6379",
+		"RABBITMQ_DSN":        "amqp://guest:guest@rabbitmq:5672/",
+		"RABBITMQ_QUEUE_NAME": "queue1",
+	}
+
+	for key, value := range envVars {
+		os.Setenv(key, value)
+	}
+
+	network, err := network.New(context.Background())
+	if err != nil {
+		t.Fatalf("Unexpected error while seting up docker network: %v", err)
+	}
+	// network, err := testcontainers.GenericNetwork(context.Background(), testcontainers.GenericNetworkRequest{})
+	// if err != nil {
+	// 	t.Fatalf("Failed to set up network: %v", err)
+	// }
+
+	ctx := context.Background()
+
+	// Postgres container
+	pgReq := testcontainers.ContainerRequest{
+		Image:        "postgres:latest",
+		ExposedPorts: []string{"5432:5432/tcp"},
+		Env: map[string]string{
+			"POSTGRES_USER":     "postgres",
+			"POSTGRES_PASSWORD": "password",
+			"POSTGRES_DB":       "ekyc_db",
+		},
+		Hostname:       "database",
+		Networks:       []string{network.Name},
+		NetworkAliases: map[string][]string{network.Name: {"database"}},
+		WaitingFor:     wait.ForLog("database system is ready to accept connections").WithPollInterval(30 * time.Second),
+	}
+	pgContainer := startContainer(t, ctx, pgReq)
+
+	initDbFile, err := os.Open("../../testdata/init_db.sql")
+	if err != nil {
+		t.Errorf("Error while opening the init db file: %v", initDbFile)
+	}
+	initDbFileBytes, err := io.ReadAll(initDbFile)
+	if err != nil {
+		t.Errorf("Error while reading the init db file: %v", initDbFile)
+	}
+
+	pgContainer.CopyToContainer(context.Background(), initDbFileBytes, "/tmp/migration.sql", 0644)
+	cmd := []string{
+		"psql",
+		"-h", "localhost",
+		"-U", "postgres",
+		"-d", "ekyc_db",
+		"-f", "/tmp/migration.sql",
+	}
+
+	// pgContainer.Logs(context.Background())
+
+	_, _, err = pgContainer.Exec(context.Background(), cmd, exec.Multiplexed())
+	if err != nil {
+		t.Fatalf("Failed to run migration: %v", err)
+	}
+
+	// by, err := io.ReadAll(pgExecReader)
+	// if err != nil {
+	// 	t.Fatalf("Failed to read migration: %v", err)
+	// }
+	// log.Println("Reader output: ", string(by))
+	// log.Println("Integer: ", i)
+
+	// MinIO container
+	minioReq := testcontainers.ContainerRequest{
+		Image:        "quay.io/minio/minio:latest",
+		ExposedPorts: []string{"9000:9000/tcp"},
+		Env: map[string]string{
+			"MINIO_ROOT_USER":     "minioadmin",
+			"MINIO_ROOT_PASSWORD": "minioadmin123",
+		},
+		Hostname:       "minio",
+		Cmd:            []string{"server", "/data"},
+		Networks:       []string{network.Name},
+		NetworkAliases: map[string][]string{network.Name: {"minio"}},
+		WaitingFor:     wait.ForListeningPort("9000/tcp"),
+	}
+	minioContainer := startContainer(t, ctx, minioReq)
+
+	// RabbitMQ container
+	rabbitmqReq := testcontainers.ContainerRequest{
+		Image:        "rabbitmq:3.11-management",
+		ExposedPorts: []string{"5672:5672/tcp"},
+		Env: map[string]string{
+			"RABBITMQ_DEFAULT_USER": "guest",
+			"RABBITMQ_DEFAULT_PASS": "guest",
+		},
+		Hostname:       "rabbitmq",
+		Networks:       []string{network.Name},
+		NetworkAliases: map[string][]string{network.Name: {"rabbitmq"}},
+		WaitingFor:     wait.ForListeningPort("5672/tcp"),
+	}
+	rabbitmqContainer := startContainer(t, ctx, rabbitmqReq)
+
+	// Redis container
+	redisReq := testcontainers.ContainerRequest{
+		Image:          "redis:latest",
+		ExposedPorts:   []string{"6379:6379/tcp"},
+		Hostname:       "redis",
+		Networks:       []string{network.Name},
+		NetworkAliases: map[string][]string{network.Name: {"redis"}},
+		WaitingFor:     wait.ForListeningPort("6379/tcp"),
+	}
+	redisContainer := startContainer(t, ctx, redisReq)
+
+	// Application container
+	appReq := testcontainers.ContainerRequest{
+		FromDockerfile: testcontainers.FromDockerfile{
+			Context:    "../../.",
+			Dockerfile: "Dockerfile_app",
+			// KeepImage:  true,
+		},
+		Hostname:           "app",
+		ExposedPorts:       []string{"8080:8080/tcp"},
+		Env:                envVars,
+		Networks:           []string{network.Name},
+		HostConfigModifier: func(hc *container.HostConfig) {},
+		// AutoRemove:         false,
+	}
+	appContainer := startContainer(t, ctx, appReq)
+	// logs, err := appContainer.Logs(ctx)
+	// if err != nil {
+	// 	log.Fatalf("Failed to fetch logs: %s", err)
+	// }
+
+	// log.Println("App Container logs:")
+	// io.Copy(os.Stdout, logs)
+
+	// Worker container
+	workerReq := testcontainers.ContainerRequest{
+		FromDockerfile: testcontainers.FromDockerfile{
+			Context:    "../../.",
+			Dockerfile: "Dockerfile_worker",
+			KeepImage:  true,
+		},
+		Hostname: "worker",
+		// ExposedPorts: []string{"8080:8080/tcp"},
+		Env:      envVars,
+		Networks: []string{network.Name},
+	}
+	workerContainer := startContainer(t, ctx, workerReq)
+
+	// appHost, err := appContainer.Host(ctx)
+	// if err != nil {
+	// 	t.Fatalf("Failed to get app container host: %v", err)
+	// }
+
+	// appPort, err := appContainer.MappedPort(ctx, "8080/tcp")
+	// if err != nil {
+	// 	t.Fatalf("Failed to get app container mapped port: %v", err)
+	// }
+
+	// Construct the base URL for the app
+	// appURL := fmt.Sprintf("http://%s:%s", appHost, appPort.Port())
+	// log.Println(appURL)
+	// log.Println(appURL)
+	// log.Println(appURL)
+
+	t.Cleanup(func() {
+		pgContainer.Terminate(ctx)
+		minioContainer.Terminate(ctx)
+		rabbitmqContainer.Terminate(ctx)
+		redisContainer.Terminate(ctx)
+		appContainer.Terminate(ctx)
+		workerContainer.Terminate(ctx)
+		for key := range envVars {
+			os.Unsetenv(key)
+		}
+	})
+
+	return func() {}
+}
+
+func startContainer(t *testing.T, ctx context.Context, req testcontainers.ContainerRequest) testcontainers.Container {
+	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: req,
+		Started:          true,
+	})
+	if err != nil {
+		t.Fatalf("Failed to start container: %v", err)
+	}
+	return container
+}
+
+// func setupTest(t *testing.T) func() {
+// 	t.Helper()
+
+// 	os.Setenv("HOST", "")
+// 	os.Setenv("PORT", "8080")
+// 	os.Setenv("DB_DSN", "postgres://postgres:password@database:5432/ekyc_db?sslmode=disable")
+// 	os.Setenv("POSTGRES_USER", "postgres")
+// 	os.Setenv("POSTGRES_PASSWORD", "password")
+// 	os.Setenv("POSTGRES_ENDPOINT", "database:5432")
+// 	os.Setenv("POSTGRES_SSL", "sslmode=disable")
+// 	os.Setenv("POSTGRES_DB", "ekyc_db")
+// 	os.Setenv("HASH_PASSWORD", "powerrangersspd")
+// 	os.Setenv("MINIO_USER", "minioadmin")
+// 	os.Setenv("MINIO_PASSWORD", "minioadmin123")
+// 	os.Setenv("MINIO_ENDPOINT", "minio:9000")
+// 	os.Setenv("MINIO_SSL", "false")
+// 	os.Setenv("MINIO_BUCKET_NAME", "ekyc")
+// 	os.Setenv("REDIS_DSN", "redis:6379")
+// 	os.Setenv("RABBITMQ_DSN", "amqp://guest:guest@rabbitmq:5672/")
+// 	os.Setenv("RABBITMQ_QUEUE_NAME", "queue1")
+
+// 	network, err := network.New(context.Background())
+// 	if err != nil {
+// 		t.Fatalf("Unexpected error while seting up docker network: %v", err)
+// 	}
+
+// 	ctx := context.Background()
+// 	pgReq := testcontainers.ContainerRequest{
+// 		Image:        "postgres:latest",
+// 		ExposedPorts: []string{"5432/tcp"},
+// 		Env: map[string]string{
+// 			"POSTGRES_USER":     "postgres",
+// 			"POSTGRES_PASSWORD": "password",
+// 			"POSTGRES_DB":       "ekyc_db",
+// 		},
+// 		Networks:   []string{network.Name},
+// 		WaitingFor: wait.ForLog("database system is ready to accept connections"),
+// 	}
+// 	pgContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{ContainerRequest: pgReq, Started: true})
+// 	if err != nil {
+// 		t.Fatalf("Unexpected error while seting up postgres container: %v", err)
+// 	}
+// 	pgContainerCleanup := func() {
+// 		testcontainers.TerminateContainer(pgContainer)
+// 	}
+// 	// pgContainerLogsReader, err := pgContainer.Logs(ctx)
+// 	// if err != nil {
+// 	// 	t.Fatalf("Unexpected error while getting postgres container logs: %v", err)
+// 	// }
+// 	// io.Copy(os.Stdout, pgContainerLogsReader)
+
+// 	minioReq := testcontainers.ContainerRequest{
+// 		Image:        "quay.io/minio/minio:latest",
+// 		ExposedPorts: []string{"9000/tcp"},
+// 		Env: map[string]string{
+// 			"MINIO_ROOT_USER":     "minioadmin",
+// 			"MINIO_ROOT_PASSWORD": "minioadmin123",
+// 			"MINIO_BROWSER_PORT":  "9001",
+// 		},
+// 		Cmd:      []string{"server", "/data"},
+// 		Networks: []string{network.Name},
+// 	}
+// 	minioContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{ContainerRequest: minioReq, Started: true})
+// 	if err != nil {
+// 		t.Fatalf("Unexpected error while seting up minio container: %v", err)
+// 	}
+// 	minioContainerCleanup := func() {
+// 		testcontainers.TerminateContainer(minioContainer)
+// 	}
+// 	// minioContainerLogsReader, err := minioContainer.Logs(ctx)
+// 	// if err != nil {
+// 	// 	t.Fatalf("Unexpected error while getting postgres container logs: %v", err)
+// 	// }
+// 	// io.Copy(os.Stdout, minioContainerLogsReader)
+
+// 	rabbitmqReq := testcontainers.ContainerRequest{
+// 		Image:        "rabbitmq:3.11-management",
+// 		ExposedPorts: []string{"5672/tcp"},
+// 		Env: map[string]string{
+// 			"RABBITMQ_DEFAULT_USER": "guest",
+// 			"RABBITMQ_DEFAULT_PASS": "guest",
+// 		},
+// 		Networks: []string{network.Name},
+// 	}
+// 	rabbitmqContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{ContainerRequest: rabbitmqReq, Started: true})
+// 	if err != nil {
+// 		t.Fatalf("Unexpected error while seting up rabbitmq container: %v", err)
+// 	}
+// 	rabbitmqContainerCleanup := func() {
+// 		testcontainers.TerminateContainer(rabbitmqContainer)
+// 	}
+// 	// rabbitmqContainerLogsReader, err := rabbitmqContainer.Logs(ctx)
+// 	// if err != nil {
+// 	// 	t.Fatalf("Unexpected error while getting postgres container logs: %v", err)
+// 	// }
+// 	// io.Copy(os.Stdout, rabbitmqContainerLogsReader)
+
+// 	redisReq := testcontainers.ContainerRequest{
+// 		Image:        "redis:latest",
+// 		ExposedPorts: []string{"5672/tcp"},
+// 		Cmd:          []string{"redis-server", "--save", "60", "1", "--loglevel", "warning"},
+// 		Networks:     []string{network.Name},
+// 	}
+// 	redisContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{ContainerRequest: redisReq, Started: true})
+// 	if err != nil {
+// 		t.Fatalf("Unexpected error while seting up redis container: %v", err)
+// 	}
+// 	redisContainerCleanup := func() {
+// 		testcontainers.TerminateContainer(redisContainer)
+// 	}
+// 	// redisContainerLogsReader, err := redisContainer.Logs(ctx)
+// 	// if err != nil {
+// 	// 	t.Fatalf("Unexpected error while getting postgres container logs: %v", err)
+// 	// }
+// 	// io.Copy(os.Stdout, redisContainerLogsReader)
+
+// 	appReq := testcontainers.ContainerRequest{
+// 		FromDockerfile: testcontainers.FromDockerfile{
+// 			Context:    "../../.",
+// 			Dockerfile: "Dockerfile_app",
+// 			KeepImage:  true,
+// 		},
+// 		ExposedPorts: []string{"8080/tcp"},
+// 		Env: map[string]string{
+// 			"HOST":                "",
+// 			"PORT":                "8080",
+// 			"DB_DSN":              "postgres://postgres:password@database:5432/ekyc_db?sslmode=disable",
+// 			"POSTGRES_USER":       "postgres",
+// 			"POSTGRES_PASSWORD":   "password",
+// 			"POSTGRES_ENDPOINT":   "database:5432",
+// 			"POSTGRES_SSL":        "sslmode=disable",
+// 			"POSTGRES_DB":         "ekyc_db",
+// 			"HASH_PASSWORD":       "powerrangersspd",
+// 			"MINIO_USER":          "minioadmin",
+// 			"MINIO_PASSWORD":      "minioadmin123",
+// 			"MINIO_ENDPOINT":      "minio:9000",
+// 			"MINIO_SSL":           "false",
+// 			"MINIO_BUCKET_NAME":   "ekyc",
+// 			"REDIS_DSN":           "redis:6379",
+// 			"RABBITMQ_DSN":        "amqp://guest:guest@rabbitmq:5672/",
+// 			"RABBITMQ_QUEUE_NAME": "queue1",
+// 		},
+// 		Networks: []string{network.Name},
+// 	}
+// 	appContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{ContainerRequest: appReq, Started: true})
+// 	if err != nil {
+// 		t.Fatalf("Unexpected error while seting up go-app container: %v", err)
+// 	}
+// 	appContainerCleanup := func() {
+// 		testcontainers.TerminateContainer(appContainer)
+// 	}
+// 	appContainerLogsReader, err := appContainer.Logs(ctx)
+// 	if err != nil {
+// 		t.Fatalf("Unexpected error while getting postgres container logs: %v", err)
+// 	}
+// 	io.Copy(os.Stdout, appContainerLogsReader)
+// 	logs, err := appContainer.Logs(ctx)
+// 	if err != nil {
+// 		log.Fatalf("Failed to fetch logs: %s", err)
+// 	}
+
+// 	log.Println("Container logs:")
+// 	io.Copy(os.Stdout, logs)
+
+// 	workerReq := testcontainers.ContainerRequest{
+// 		FromDockerfile: testcontainers.FromDockerfile{
+// 			Context:    "../../.",
+// 			Dockerfile: "Dockerfile_worker",
+// 			KeepImage:  false,
+// 		},
+// 		Env: map[string]string{
+// 			"DB_DSN":              "postgres://postgres:password@database:5432/ekyc_db?sslmode=disable",
+// 			"POSTGRES_USER":       "postgres",
+// 			"POSTGRES_PASSWORD":   "password",
+// 			"POSTGRES_ENDPOINT":   "database:5432",
+// 			"POSTGRES_SSL":        "sslmode=disable",
+// 			"POSTGRES_DB":         "ekyc_db",
+// 			"HASH_PASSWORD":       "powerrangersspd",
+// 			"MINIO_USER":          "minioadmin",
+// 			"MINIO_PASSWORD":      "minioadmin123",
+// 			"MINIO_ENDPOINT":      "minio:9000",
+// 			"MINIO_SSL":           "false",
+// 			"MINIO_BUCKET_NAME":   "ekyc",
+// 			"RABBITMQ_DSN":        "amqp://guest:guest@rabbitmq:5672/",
+// 			"RABBITMQ_QUEUE_NAME": "queue1",
+// 		},
+// 		Networks: []string{network.Name},
+// 	}
+// 	workerContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{ContainerRequest: workerReq, Started: true})
+// 	if err != nil {
+// 		t.Fatalf("Unexpected error while seting up go-worker container: %v", err)
+// 	}
+// 	workerContainerCleanup := func() {
+// 		testcontainers.TerminateContainer(workerContainer)
+// 	}
+// 	// workerContainerLogsReader, err := workerContainer.Logs(ctx)
+// 	// if err != nil {
+// 	// 	t.Fatalf("Unexpected error while getting postgres container logs: %v", err)
+// 	// }
+// 	// io.Copy(os.Stdout, workerContainerLogsReader)
+
+// 	// t.Cleanup(func() {
+// 	// 	pgContainerCleanup()
+// 	// 	minioContainerCleanup()
+// 	// 	rabbitmqContainerCleanup()
+// 	// 	redisContainerCleanup()
+// 	// 	appContainerCleanup()
+// 	// 	workerContainerCleanup()
+// 	// })
+
+// 	return func() {
+
+// 		os.Unsetenv("HOST")
+// 		os.Unsetenv("PORT")
+// 		os.Unsetenv("DB_DSN")
+// 		os.Unsetenv("POSTGRES_USER")
+// 		os.Unsetenv("POSTGRES_PASSWORD")
+// 		os.Unsetenv("POSTGRES_ENDPOINT")
+// 		os.Unsetenv("POSTGRES_SSL")
+// 		os.Unsetenv("POSTGRES_DB")
+// 		os.Unsetenv("HASH_PASSWORD")
+// 		os.Unsetenv("MINIO_USER")
+// 		os.Unsetenv("MINIO_PASSWORD")
+// 		os.Unsetenv("MINIO_ENDPOINT")
+// 		os.Unsetenv("MINIO_SSL")
+// 		os.Unsetenv("MINIO_BUCKET_NAME")
+// 		os.Unsetenv("REDIS_DSN")
+// 		os.Unsetenv("RABBITMQ_DSN")
+// 		os.Unsetenv("RABBITMQ_QUEUE_NAME")
+// 		pgContainerCleanup()
+// 		minioContainerCleanup()
+// 		rabbitmqContainerCleanup()
+// 		redisContainerCleanup()
+// 		appContainerCleanup()
+// 		workerContainerCleanup()
+// 	}
+
+// }
 
 func testOCRIntegration(t *testing.T) {
 	t.Run("Test OCR file upload endpoint", func(t *testing.T) {
