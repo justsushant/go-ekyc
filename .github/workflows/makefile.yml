@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DOCKER_IMAGE_TAG: 0.1
+      # DOCKER_IMAGE_TAG: 0.1
       ENV_FILE: .docker-compose.env
       POSTGRES_USER: ${{secrets.POSTGRES_USER}}
       POSTGRES_PASSWORD: ${{secrets.POSTGRES_PASSWORD}}
@@ -28,6 +28,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4 
+
+    - name: Generate Calendar Version
+      id: calver
+      run: |
+        DATE=$(date +'%Y.%m.%d')
+        COMMIT=$(git rev-parse --short HEAD)
+        echo "DOCKER_IMAGE_TAG=$DATE-$COMMIT" >> $GITHUB_ENV
+      env:
+        TZ: Asia/Kolkata
 
     - name: Build App
       run: make build-app
