@@ -71,6 +71,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4 
 
+    - name: Cache Docker Layers
+      uses: actions/cache@v3
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-docker-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-docker-
+
     - name: Generate Calendar Version
       id: calver
       run: |
@@ -92,26 +100,33 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    - name: Build and push
+    - name: Build and push App
       uses: docker/build-push-action@v6
       with:
         context: .
         file: Dockerfile_app
         push: true
         tags: justsushant/go-ekyc:app-${{ env.DOCKER_IMAGE_TAG }}
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache
 
-    - name: Build and push
+    - name: Build and push Cronjob
       uses: docker/build-push-action@v6
       with:
         context: .
         file: Dockerfile_cronjob
         push: true
         tags: justsushant/go-ekyc:cronjob-${{ env.DOCKER_IMAGE_TAG }}
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache
 
-    - name: Build and push
+
+    - name: Build and push Worker
       uses: docker/build-push-action@v6
       with:
         context: .
         file: Dockerfile_worker
         push: true
         tags: justsushant/go-ekyc:worker-${{ env.DOCKER_IMAGE_TAG }}
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache
