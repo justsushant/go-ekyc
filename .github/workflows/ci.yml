@@ -25,6 +25,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4 
 
+    - name: Cache Go Modules
+      uses: actions/cache@v3
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
     - name: Build App
       run: make build-app
 
@@ -47,6 +55,7 @@ jobs:
       run: make test-integration
 
   build-and-push:
+    needs: lint-build-and-test
     if: github.ref_name == 'main'
     runs-on: ubuntu-latest
 
