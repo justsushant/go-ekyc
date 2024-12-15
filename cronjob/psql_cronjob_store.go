@@ -12,8 +12,8 @@ type PsqlCrobJobStore struct {
 	db *sql.DB
 }
 
-func NewPsqlCrobJobStore(conn *db.PostgresConn) PsqlCrobJobStore {
-	psqlClient := db.NewPsqlClient(conn)
+func NewPsqlCrobJobStore(dsn string) PsqlCrobJobStore {
+	psqlClient := db.NewPsqlClient(dsn)
 	return PsqlCrobJobStore{
 		db: psqlClient,
 	}

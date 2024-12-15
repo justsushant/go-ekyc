@@ -13,8 +13,8 @@ type PsqlStore struct {
 	db *sql.DB
 }
 
-func NewPsqlStore(conn *db.PostgresConn) PsqlStore {
-	psqlClient := db.NewPsqlClient(conn)
+func NewPsqlStore(dsn string) PsqlStore {
+	psqlClient := db.NewPsqlClient(dsn)
 	return PsqlStore{
 		db: psqlClient,
 	}

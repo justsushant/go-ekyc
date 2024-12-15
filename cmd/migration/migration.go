@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"strings"
 
@@ -10,7 +9,6 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/config"
-	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/db"
 )
 
 const MIGRATION_FILES_PATH = "file://db/migration"
@@ -38,15 +36,7 @@ func main() {
 	flag.Parse()
 
 	// create migration using migration file path and db conn string
-	psqlConn := &db.PostgresConn{
-		Endpoint: cfg.PostgresEndpoint,
-		User:     cfg.PostgresUser,
-		Password: cfg.PostgresPassword,
-		Ssl:      cfg.PostgresSSL,
-		Db:       cfg.PostgresDB,
-	}
-	dsn := fmt.Sprintf("postgres://%s:%s@database:5432/ekyc_db?sslmode=disable", psqlConn.User, psqlConn.Password)
-	mig, err := migrate.New(MIGRATION_FILES_PATH, dsn)
+	mig, err := migrate.New(MIGRATION_FILES_PATH, cfg.DbDsn)
 	if err != nil {
 		log.Fatalf("Error occured while creating migration: %v\n", err)
 	}
