@@ -31,10 +31,15 @@ func main() {
 	minioStore := service.NewMinioStore(minioConn, cfg.MinioBucket)
 
 	// get cronjob service
-	service := cronjob.NewCronJobService()
+	service := cronjob.NewService()
 
 	// start the cronjob
-	c := cronjob.NewCronJob(psqlStore, minioStore, service, cron.New())
+	c := cronjob.New(&cronjob.CronJobConfig{
+		DataStore:      psqlStore,
+		FileStore:      minioStore,
+		ServiceManager: service,
+		Cron:           cron.New(),
+	})
 
 	// add the schedules
 	currentTime := time.Now()

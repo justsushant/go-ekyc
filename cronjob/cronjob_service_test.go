@@ -71,7 +71,7 @@ func TestPrepareCSV(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			service := NewCronJobService()
+			service := NewService()
 			csvBytes, err := service.PrepareCSV(tc.data)
 
 			if tc.expErr != nil {
@@ -155,7 +155,7 @@ func TestPrepareCSVForMonthlyReport(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			service := NewCronJobService()
+			service := NewService()
 			csvBytes, err := service.PrepareCSV(tc.data)
 
 			if tc.expErr != nil {

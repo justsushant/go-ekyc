@@ -16,26 +16,44 @@ import (
 )
 
 type Service struct {
+	// store
 	dataStore  store.DataStore
 	fileStore  store.FileStore
 	cacheStore store.CacheStore
-	keyService KeyGenerator
+
+	// business logic
 	faceMatch  FaceMatcher
 	ocrService OCRPerformer
-	queue      TaskQueue
+
+	// task processing
+	queue TaskQueue
+
+	// utils
+	keyService KeyGenerator
 	uuid       UUIDGen
 }
 
-func NewService(dataStore store.DataStore, fileStore store.FileStore, keyService KeyGenerator, faceMatch FaceMatcher, ocrService OCRPerformer, queue TaskQueue, uuid UUIDGen, cacheStore store.CacheStore) Service {
+type ServiceConfig struct {
+	DataStore  store.DataStore
+	FileStore  store.FileStore
+	CacheStore store.CacheStore
+	KeyService KeyGenerator
+	FaceMatch  FaceMatcher
+	OCR        OCRPerformer
+	Queue      TaskQueue
+	UUID       UUIDGen
+}
+
+func NewService(config *ServiceConfig) Service {
 	return Service{
-		dataStore:  dataStore,
-		keyService: keyService,
-		fileStore:  fileStore,
-		cacheStore: cacheStore,
-		faceMatch:  faceMatch,
-		ocrService: ocrService,
-		queue:      queue,
-		uuid:       uuid,
+		dataStore:  config.DataStore,
+		keyService: config.KeyService,
+		fileStore:  config.FileStore,
+		cacheStore: config.CacheStore,
+		faceMatch:  config.FaceMatch,
+		ocrService: config.OCR,
+		queue:      config.Queue,
+		uuid:       config.UUID,
 	}
 }
 

@@ -22,13 +22,21 @@ type Server struct {
 	queue service.TaskQueue
 }
 
-func NewServer(addr string, db store.DataStore, minio store.FileStore, redis store.CacheStore, queue service.TaskQueue) *Server {
+type ServerConfig struct {
+	Addr       string
+	DataStore  store.DataStore
+	FileStore  store.FileStore
+	CacheStore store.CacheStore
+	Queue      service.TaskQueue
+}
+
+func New(serverConfig *ServerConfig) *Server {
 	return &Server{
-		addr:  addr,
-		db:    db,
-		minio: minio,
-		redis: redis,
-		queue: queue,
+		addr:  serverConfig.Addr,
+		db:    serverConfig.DataStore,
+		minio: serverConfig.FileStore,
+		redis: serverConfig.CacheStore,
+		queue: serverConfig.Queue,
 	}
 }
 
@@ -52,7 +60,17 @@ func (s *Server) Run() {
 	dummyOcr := &service.DummyOcrService{}
 	uuid := &service.UuidService{}
 
-	service := service.NewService(s.db, s.minio, keyService, dummyFaceMatch, dummyOcr, s.queue, uuid, s.redis)
+	serviceConfig := &service.ServiceConfig{
+		DataStore:  s.db,
+		FileStore:  s.minio,
+		CacheStore: s.redis,
+		KeyService: keyService,
+		FaceMatch:  dummyFaceMatch,
+		OCR:        dummyOcr,
+		Queue:      s.queue,
+		UUID:       uuid,
+	}
+	service := service.NewService(serviceConfig)
 	handler := handler.NewHandler(service)
 	handler.RegisterRoutes(unprotectedRouter)
 	handler.RegisterProtectedRoutes(protectedRouter)

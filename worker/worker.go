@@ -17,18 +17,26 @@ type Worker struct {
 	ocr         service.OCRPerformer
 }
 
+type WorkerConfig struct {
+	Queue       service.TaskQueue
+	DataStore   store.WorkerDataStore
+	FileStore   store.FileStore
+	FaceMatcher service.FaceMatcher
+	OCR         service.OCRPerformer
+}
+
 type QueueMessage struct {
 	Type string          `json:"type"`
 	Msg  json.RawMessage `json:"msg"`
 }
 
-func NewWorker(queue service.TaskQueue, dStore store.WorkerDataStore, fStore store.FileStore, faceMatcher service.FaceMatcher, ocr service.OCRPerformer) *Worker {
+func New(config *WorkerConfig) *Worker {
 	return &Worker{
-		queue,
-		dStore,
-		fStore,
-		faceMatcher,
-		ocr,
+		queue:       config.Queue,
+		dStore:      config.DataStore,
+		fStore:      config.FileStore,
+		faceMatcher: config.FaceMatcher,
+		ocr:         config.OCR,
 	}
 }
 

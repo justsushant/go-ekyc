@@ -44,6 +44,12 @@ func main() {
 	addr := host + ":" + port
 
 	// init and start the server
-	server := server.NewServer(addr, psqlStore, minioStore, redisStore, rabbitMqQueue)
+	server := server.New(&server.ServerConfig{
+		Addr:       addr,
+		DataStore:  psqlStore,
+		FileStore:  minioStore,
+		CacheStore: redisStore,
+		Queue:      rabbitMqQueue,
+	})
 	server.Run()
 }

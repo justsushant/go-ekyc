@@ -112,9 +112,9 @@ func TestCalcDailyReport(t *testing.T) {
 	mockDataStore := &mockCronJobStore{}
 	mockFileStore := &mockCronJobFileStore{}
 	cj := &CronJob{
-		Service:   mockService,
-		DataStore: mockDataStore,
-		FileStore: mockFileStore,
+		service:   mockService,
+		db:        mockDataStore,
+		fileStore: mockFileStore,
 	}
 	cj.CalcDailyReport(time.Date(2024, time.November, 1, 0, 0, 0, 0, time.UTC))
 
@@ -154,9 +154,9 @@ func TestCalcMonthlyReport(t *testing.T) {
 			mockDataStore := &mockCronJobStore{}
 			mockFileStore := &mockCronJobFileStore{}
 			cj := &CronJob{
-				Service:   mockService,
-				DataStore: mockDataStore,
-				FileStore: mockFileStore,
+				service:   mockService,
+				db:        mockDataStore,
+				fileStore: mockFileStore,
 			}
 			cj.CalcMonthlyReport(tc.time)
 

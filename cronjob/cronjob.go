@@ -13,32 +13,40 @@ import (
 )
 
 type CronJob struct {
-	Service   CronJobServiceManager
-	DataStore store.CronJobDataStore
-	FileStore store.FileStore
+	service   CronJobServiceManager
+	db        store.CronJobDataStore
+	fileStore store.FileStore
 	Cron      *cron.Cron
 }
 
-func NewCronJob(dataStore store.CronJobDataStore, fileStore store.FileStore, service CronJobServiceManager, cron *cron.Cron) *CronJob {
+type CronJobConfig struct {
+	ServiceManager CronJobServiceManager
+	DataStore      store.CronJobDataStore
+	FileStore      store.FileStore
+	Cron           *cron.Cron
+}
+
+// instantiate a CronJob struct
+func New(cronjobConfig *CronJobConfig) *CronJob {
 	return &CronJob{
-		DataStore: dataStore,
-		FileStore: fileStore,
-		Service:   service,
-		Cron:      cron,
+		service:   cronjobConfig.ServiceManager,
+		db:        cronjobConfig.DataStore,
+		fileStore: cronjobConfig.FileStore,
+		Cron:      cronjobConfig.Cron,
 	}
 }
 
 func (c *CronJob) CalcDailyReport(currentTime time.Time) {
 	// calc the required data from store layer
 	currentDateString := currentTime.Format("2006-01-02")
-	data, err := c.DataStore.GetReportData(currentDateString)
+	data, err := c.db.GetReportData(currentDateString)
 	if err != nil {
 		log.Printf("Error while fetching data from store for %s report: %s\n", currentDateString, err.Error())
 		return
 	}
 
 	// convert into csv file
-	csvBytes, err := c.Service.PrepareCSV(data)
+	csvBytes, err := c.service.PrepareCSV(data)
 	if err != nil {
 		log.Printf("Error while preparing csv file for date %s: %s\n", currentDateString, err.Error())
 		return
@@ -53,7 +61,7 @@ func (c *CronJob) CalcDailyReport(currentTime time.Time) {
 			"Content-Type": "text/csv",
 		},
 	}
-	err = c.FileStore.SaveFile(file)
+	err = c.fileStore.SaveFile(file)
 	if err != nil {
 		log.Printf("Error while saving csv file for date %s: %s\n", currentDateString, err.Error())
 		return
@@ -66,7 +74,7 @@ func (c *CronJob) CalcMonthlyReport(currentTime time.Time) {
 	// calc the required data from store layer
 	currentMonth := currentTime.Month()
 	currentYear := currentTime.Year()
-	data, err := c.DataStore.GetMonthlyReport(int(currentMonth), currentYear)
+	data, err := c.db.GetMonthlyReport(int(currentMonth), currentYear)
 	if err != nil {
 		log.Printf("Error while fetching data from store for month %d report: %s\n", currentMonth, err.Error())
 		return
@@ -80,7 +88,7 @@ func (c *CronJob) CalcMonthlyReport(currentTime time.Time) {
 		}
 
 		// convert into csv file
-		csvBytes, err := c.Service.PrepareCSV(d)
+		csvBytes, err := c.service.PrepareCSV(d)
 		if err != nil {
 			log.Printf("Error while preparing csv file of clientID %s for month %d: %s\n", clientID, currentMonth, err.Error())
 			continue
@@ -95,7 +103,7 @@ func (c *CronJob) CalcMonthlyReport(currentTime time.Time) {
 				"Content-Type": "text/csv",
 			},
 		}
-		err = c.FileStore.SaveFile(file)
+		err = c.fileStore.SaveFile(file)
 		if err != nil {
 			log.Printf("Error while saving csv file for month-year %d-%d: %s\n", int(currentMonth), currentYear, err.Error())
 			return

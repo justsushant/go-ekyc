@@ -17,7 +17,7 @@ var ErrMissingReports = errors.New("no reports found")
 
 type CronJobService struct{}
 
-func NewCronJobService() *CronJobService {
+func NewService() *CronJobService {
 	return &CronJobService{}
 }
 

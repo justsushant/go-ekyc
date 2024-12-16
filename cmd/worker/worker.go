@@ -36,6 +36,12 @@ func main() {
 	ocrService := worker.NewOCRService()
 
 	// start the worker and process the messages
-	worker := worker.NewWorker(rabbitMqQueue, psqlStore, minioStore, faceMatchService, ocrService)
+	worker := worker.New(&worker.WorkerConfig{
+		Queue:       rabbitMqQueue,
+		DataStore:   psqlStore,
+		FileStore:   minioStore,
+		FaceMatcher: faceMatchService,
+		OCR:         ocrService,
+	})
 	worker.ProcessMessages()
 }
