@@ -30,8 +30,6 @@ func (h *Handler) RegisterProtectedRoutes(router *gin.RouterGroup) {
 	router.POST("/upload", h.FileUploadHandler)
 	router.POST("/face-match", h.FaceMatchHandler)
 	router.POST("/ocr", h.OCRHandler)
-	router.POST("/face-match-async", h.FaceMatchHandlerAsync)
-	router.POST("/ocr-async", h.OCRHandlerAsync)
 	router.GET("/result/:jobType/:jobID", h.ResultHandler)
 }
 
@@ -128,64 +126,6 @@ func (h *Handler) FaceMatchHandler(c *gin.Context) {
 		// TODO: what to do when ok is false, or clientID is nil
 	}
 
-	if err := h.service.ValidateImage(payload, clientID.(int)); err != nil {
-		c.JSON(400, gin.H{"errorMessage": err.Error()})
-		return
-	}
-
-	score, err := h.service.CalcAndSaveFaceMatchScore(payload, clientID.(int))
-	if err != nil {
-		c.JSON(400, gin.H{"errorMessage": err.Error()})
-		return
-	}
-
-	c.JSON(200, gin.H{
-		"score": score,
-	})
-}
-
-func (h *Handler) OCRHandler(c *gin.Context) {
-	var payload types.OCRPayload
-	err := json.NewDecoder(c.Request.Body).Decode(&payload)
-	if err != nil {
-		c.JSON(400, gin.H{"errorMessage": err.Error()})
-		return
-	}
-
-	// generating UUID for file name
-	clientID, ok := c.Get("client_id")
-	if !ok {
-		// TODO: what to do when ok is false, or clientID is nil
-	}
-
-	if err := h.service.ValidateImageOCR(payload, clientID.(int)); err != nil {
-		c.JSON(400, gin.H{"errorMessage": err.Error()})
-		return
-	}
-
-	resp, err := h.service.PerformAndSaveOCR(payload, clientID.(int))
-	if err != nil {
-		c.JSON(400, gin.H{"errorMessage": err.Error()})
-		return
-	}
-
-	c.JSON(200, resp)
-}
-
-func (h *Handler) FaceMatchHandlerAsync(c *gin.Context) {
-	var payload types.FaceMatchPayload
-	err := json.NewDecoder(c.Request.Body).Decode(&payload)
-	if err != nil {
-		c.JSON(400, gin.H{"errorMessage": err.Error()})
-		return
-	}
-
-	// fetching client_id from request scoped variables
-	clientID, ok := c.Get("client_id")
-	if !ok {
-		// TODO: what to do when ok is false, or clientID is nil
-	}
-
 	// fetch data from cache
 	jobID, ok := h.service.FetchDataFromCache(payload, clientID.(int), types.FACE_MATCH_WORK_TYPE)
 	if ok {
@@ -195,7 +135,7 @@ func (h *Handler) FaceMatchHandlerAsync(c *gin.Context) {
 		return
 	}
 
-	jobID, err = h.service.PerformFaceMatchAsync(payload, clientID.(int))
+	jobID, err = h.service.PerformFaceMatch(payload, clientID.(int))
 	if err != nil {
 		c.JSON(400, gin.H{"errorMessage": err.Error()})
 		return
@@ -209,7 +149,7 @@ func (h *Handler) FaceMatchHandlerAsync(c *gin.Context) {
 	})
 }
 
-func (h *Handler) OCRHandlerAsync(c *gin.Context) {
+func (h *Handler) OCRHandler(c *gin.Context) {
 	var payload types.OCRPayload
 	err := json.NewDecoder(c.Request.Body).Decode(&payload)
 	if err != nil {
@@ -231,7 +171,7 @@ func (h *Handler) OCRHandlerAsync(c *gin.Context) {
 		return
 	}
 
-	jobID, err = h.service.PerformOCRAsync(payload, clientID.(int))
+	jobID, err = h.service.PerformOCR(payload, clientID.(int))
 	if err != nil {
 		c.JSON(400, gin.H{"errorMessage": err.Error()})
 		return

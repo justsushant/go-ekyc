@@ -39,23 +39,6 @@ func NewService(dataStore store.DataStore, fileStore store.FileStore, keyService
 	}
 }
 
-func (c Service) SaveSignupData(payload types.SignupPayload, keyPair *KeyPair) error {
-	planId, err := c.dataStore.GetPlanIdFromName(payload.Plan)
-	if err != nil {
-		return err
-	}
-
-	accessKey, _ := keyPair.GetKeysPrivate()
-	secretKeyHash := keyPair.GetSecretKeyHash()
-
-	err = c.dataStore.InsertClientData(planId, payload, accessKey, secretKeyHash)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (c Service) SignupClient(payload types.SignupPayload) (*KeyPair, error) {
 	// apply validations on payload
 	if err := validateEmail(payload.Email); err != nil {
@@ -132,121 +115,7 @@ func (c Service) SaveFile(fileHeader *multipart.FileHeader, uploadMetaData *type
 	return nil
 }
 
-func (c Service) ValidateImage(payload types.FaceMatchPayload, clientID int) error {
-	// fetching meta data of images by uuid
-	imgData1, err := c.dataStore.GetMetaDataByUUID(payload.Image1)
-	if err != nil {
-		return err
-	}
-	imgData2, err := c.dataStore.GetMetaDataByUUID(payload.Image2)
-	if err != nil {
-		return err
-	}
-
-	// if image data is nil (for nonexistent uuid case)
-	if imgData1 == nil || imgData2 == nil {
-		return ErrInvalidImgId
-	}
-
-	// if image belong to different clients
-	if imgData1.ClientID != imgData2.ClientID {
-		return ErrInvalidImgId
-	}
-
-	// if client and image have different client id
-	if imgData1.ClientID != clientID {
-		return ErrInvalidImgId
-	}
-
-	// if images are not of faces
-	if imgData1.Type != types.FACE_TYPE || imgData2.Type != types.FACE_TYPE {
-		return ErrNotFaceImg
-	}
-
-	return nil
-}
-
-func (c Service) CalcAndSaveFaceMatchScore(payload types.FaceMatchPayload, clientID int) (int, error) {
-	score, err := c.faceMatch.PerformFaceMatch(payload)
-	if err != nil {
-		return 0, err
-	}
-
-	// fetching meta data of images by uuid
-	imgData1, err := c.dataStore.GetMetaDataByUUID(payload.Image1)
-	if err != nil {
-		return 0, err
-	}
-	imgData2, err := c.dataStore.GetMetaDataByUUID(payload.Image2)
-	if err != nil {
-		return 0, err
-	}
-	result := &types.FaceMatchData{
-		ClientID: clientID,
-		ImageID1: imgData1.Id,
-		ImageID2: imgData2.Id,
-		Score:    score,
-	}
-
-	err = c.dataStore.InsertFaceMatchResult(result)
-	if err != nil {
-		return 0, err
-	}
-
-	return score, nil
-}
-
-func (c Service) PerformAndSaveOCR(payload types.OCRPayload, clientID int) (*types.OCRResponse, error) {
-	data, err := c.ocrService.PerformOCR(payload)
-	if err != nil {
-		return nil, err
-	}
-
-	imgData, err := c.dataStore.GetMetaDataByUUID(payload.Image)
-	if err != nil {
-		return nil, err
-	}
-
-	result := &types.OCRData{
-		ImageID:  imgData.Id,
-		ClientID: clientID,
-		Data:     data.String(),
-	}
-
-	err = c.dataStore.InsertOCRResult(result)
-	if err != nil {
-		return nil, err
-	}
-
-	return data, nil
-}
-
-func (c Service) ValidateImageOCR(payload types.OCRPayload, clientID int) error {
-	// fetching meta data of image by uuid
-	imgData, err := c.dataStore.GetMetaDataByUUID(payload.Image)
-	if err != nil {
-		return err
-	}
-
-	// if image data is nil (for nonexistent uuid case)
-	if imgData == nil {
-		return ErrInvalidImgId
-	}
-
-	// if image belong to different clients
-	if imgData.ClientID != clientID {
-		return ErrInvalidImgId
-	}
-
-	// if image is not of id card
-	if imgData.Type != types.ID_CARD_TYPE {
-		return ErrNotIDCardImg
-	}
-
-	return nil
-}
-
-func (c Service) PerformFaceMatchAsync(payload types.FaceMatchPayload, clientID int) (string, error) {
+func (c Service) PerformFaceMatch(payload types.FaceMatchPayload, clientID int) (string, error) {
 	// make validations for the images
 	err := c.validateImagesForFaceMatch(payload, clientID)
 	if err != nil {
@@ -284,7 +153,7 @@ func (c Service) PerformFaceMatchAsync(payload types.FaceMatchPayload, clientID 
 	return jobID, nil
 }
 
-func (c Service) PerformOCRAsync(payload types.OCRPayload, clientID int) (string, error) {
+func (c Service) PerformOCR(payload types.OCRPayload, clientID int) (string, error) {
 	// make validations for the images
 	err := c.validateImageForOCR(payload, clientID)
 	if err != nil {
@@ -441,7 +310,9 @@ func (c Service) FetchDataFromCache(payload interface{}, clientID int, jobType s
 		cacheKey = c.makeHash(key)
 	}
 
-	// TODO: this may cause bugs if switch is unable to match the payload with a type & both falsy values will be returned and handler will send empty string in response to client
+	// TODO: possible bug
+	// this may cause bugs if switch is unable to match the payload with a type
+	// & both falsy values will be returned and handler will send empty string in response to client
 	val := c.getObjFromCache(cacheKey)
 	if val != "" {
 		return val, true

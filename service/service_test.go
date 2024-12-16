@@ -2,7 +2,6 @@ package service
 
 import (
 	"errors"
-	"reflect"
 	"testing"
 
 	"github.com/justsushant/one2n-go-bootcamp/go-ekyc/types"
@@ -204,231 +203,7 @@ func TestSignupClient(t *testing.T) {
 	}
 }
 
-func TestValidateImage(t *testing.T) {
-	tt := []struct {
-		name     string
-		payload  types.FaceMatchPayload
-		clientID int
-		expErr   error
-	}{
-		{
-			name: "not a face image for first image id",
-			payload: types.FaceMatchPayload{
-				Image1: "abc",
-				Image2: "xyz",
-			},
-			clientID: 1,
-			expErr:   ErrNotFaceImg,
-		},
-		{
-			name: "not a face image for second image id",
-			payload: types.FaceMatchPayload{
-				Image1: "def",
-				Image2: "pqr",
-			},
-			clientID: 2,
-			expErr:   ErrNotFaceImg,
-		},
-		{
-			name: "non-existent image for first image id",
-			payload: types.FaceMatchPayload{
-				Image1: "ert",
-				Image2: "pqr",
-			},
-			clientID: 1,
-			expErr:   ErrInvalidImgId,
-		},
-		{
-			name: "non-existent image for second image id",
-			payload: types.FaceMatchPayload{
-				Image1: "def",
-				Image2: "jnk",
-			},
-			clientID: 1,
-			expErr:   ErrInvalidImgId,
-		},
-		{
-			name: "different client id for both images",
-			payload: types.FaceMatchPayload{
-				Image1: "xyz",
-				Image2: "def",
-			},
-			clientID: 1,
-			expErr:   ErrInvalidImgId,
-		},
-		{
-			name: "different client id for client and image",
-			payload: types.FaceMatchPayload{
-				Image1: "asdf",
-				Image2: "lkjh",
-			},
-			clientID: 2,
-			expErr:   ErrInvalidImgId,
-		},
-	}
-
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
-			service := &Service{
-				dataStore: &mockDataStore{},
-			}
-
-			err := service.ValidateImage(tc.payload, tc.clientID)
-			if err != tc.expErr {
-				t.Errorf("Expected %q but got %q", tc.expErr, err)
-			}
-		})
-	}
-}
-
 func TestPerformFaceMatch(t *testing.T) {
-	tt := []struct {
-		name    string
-		payload types.FaceMatchPayload
-		expOut  int
-		expErr  error
-	}{
-		{
-			name: "only case",
-			payload: types.FaceMatchPayload{
-				Image1: "abc",
-				Image2: "xyz",
-			},
-			expOut: 45,
-			expErr: nil,
-		},
-	}
-
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
-			service := &Service{
-				dataStore: &mockDataStore{},
-				faceMatch: &mockFaceMatch{},
-			}
-			clientID := 1
-			score, err := service.CalcAndSaveFaceMatchScore(tc.payload, clientID)
-			if tc.expErr != nil {
-				if err == nil {
-					t.Fatalf("Expected error but got nil")
-				}
-
-				if !errors.Is(tc.expErr, err) {
-					t.Errorf("Expected error %q but got %q", tc.expErr, err)
-				}
-			}
-			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
-			}
-
-			if score != tc.expOut {
-				t.Errorf("Expected %q but got %q", tc.expOut, score)
-			}
-		})
-	}
-}
-
-func TestValidateImageOCR(t *testing.T) {
-	tt := []struct {
-		name     string
-		payload  types.OCRPayload
-		clientID int
-		expErr   error
-	}{
-		{
-			name: "not an id_card image for image id",
-			payload: types.OCRPayload{
-				Image: "cvbas",
-			},
-			clientID: 2,
-			expErr:   ErrNotIDCardImg,
-		},
-		{
-			name: "non-existent image for first image id",
-			payload: types.OCRPayload{
-				Image: "ert",
-			},
-			clientID: 2,
-			expErr:   ErrInvalidImgId,
-		},
-		{
-			name: "different client id for image and client",
-			payload: types.OCRPayload{
-				Image: "cvbasrt",
-			},
-			clientID: 4,
-			expErr:   ErrInvalidImgId,
-		},
-	}
-
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
-			service := &Service{
-				dataStore: &mockDataStore{},
-			}
-
-			err := service.ValidateImageOCR(tc.payload, tc.clientID)
-			if err != tc.expErr {
-				t.Errorf("Expected %q but got %q", tc.expErr, err)
-			}
-		})
-	}
-}
-
-func TestPerformOCR(t *testing.T) {
-	tt := []struct {
-		name    string
-		payload types.OCRPayload
-		expOut  *types.OCRResponse
-		expErr  error
-	}{
-		{
-			name: "only case",
-			payload: types.OCRPayload{
-				Image: "ac",
-			},
-			expOut: &types.OCRResponse{
-				Name:      "John Adams",
-				Gender:    "Male",
-				DOB:       "1990-01-24",
-				IdNumber:  "1234-1234-1234",
-				AddrLine1: "A2, 201, Amar Villa",
-				AddrLine2: "MG Road, Pune",
-				Pincode:   "411004",
-			},
-			expErr: nil,
-		},
-	}
-
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
-			service := &Service{
-				dataStore:  &mockDataStore{},
-				ocrService: &mockOCR{},
-			}
-
-			clientID := 1
-			resp, err := service.PerformAndSaveOCR(tc.payload, clientID)
-			if tc.expErr != nil {
-				if err == nil {
-					t.Fatalf("Expected error but got nil")
-				}
-
-				if !errors.Is(tc.expErr, err) {
-					t.Errorf("Expected error %q but got %q", tc.expErr, err)
-				}
-			}
-			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
-			}
-
-			if !reflect.DeepEqual(resp, tc.expOut) {
-				t.Errorf("Expected %q but got %q", tc.expOut, resp)
-			}
-		})
-	}
-}
-
-func TestPerformFaceMatchAsync(t *testing.T) {
 	tt := []struct {
 		name     string
 		payload  types.FaceMatchPayload
@@ -511,7 +286,7 @@ func TestPerformFaceMatchAsync(t *testing.T) {
 				queue:     &mockTaskQueue{},
 			}
 
-			id, err := service.PerformFaceMatchAsync(tc.payload, tc.clientID)
+			id, err := service.PerformFaceMatch(tc.payload, tc.clientID)
 			if tc.expErr != nil {
 				if err == nil {
 					t.Fatalf("Expected error but got nil")
@@ -534,7 +309,7 @@ func TestPerformFaceMatchAsync(t *testing.T) {
 	}
 }
 
-func TestPerformOCRAsync(t *testing.T) {
+func TestPerformOCR(t *testing.T) {
 	tt := []struct {
 		name     string
 		payload  types.OCRPayload
@@ -586,7 +361,7 @@ func TestPerformOCRAsync(t *testing.T) {
 				queue:      &mockTaskQueue{},
 			}
 
-			id, err := service.PerformOCRAsync(tc.payload, tc.clientID)
+			id, err := service.PerformOCR(tc.payload, tc.clientID)
 			if tc.expErr != nil {
 				if err == nil {
 					t.Fatalf("Expected error but got nil")
